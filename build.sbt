@@ -38,3 +38,5 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
     "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test
 )
+
+libraryDependencies += "org.scala-graph" %% "graph-core" % "1.13.5"
