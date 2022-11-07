@@ -3,7 +3,7 @@ ThisBuild / organization := "it.unibo.pps.ddos"
 
 name := "ddos-framework"
 
-scalaVersion := "3.1.3"
+scalaVersion := "3.2.1"
 
 lazy val app = (project in file("app"))
   .settings(
@@ -19,7 +19,7 @@ ThisBuild / assemblyMergeStrategy := {
     case PathList("META-INF", _*) => MergeStrategy.discard
     case _ => MergeStrategy.first
 }
-val AkkaVersion = "2.6.20"
+val AkkaVersion = "2.7.0"
 
 //Add Monix dependencies
 libraryDependencies += "io.monix" %% "monix" % "3.4.1"
@@ -28,13 +28,13 @@ libraryDependencies += "io.monix" %% "monix" % "3.4.1"
 libraryDependencies += "org.jfree" % "jfreechart" % "1.5.3"
 
 //Add ScalaTest dependencies
-libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.12" % Test
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.14" % Test
 
 //Add Prolog dependencies
 libraryDependencies += "it.unibo.alice.tuprolog" % "2p-core" % "4.1.1"
 libraryDependencies += "it.unibo.alice.tuprolog" % "2p-ui" % "4.1.1"
 
 libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
-    "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test
+    "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
+    "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test
 )
