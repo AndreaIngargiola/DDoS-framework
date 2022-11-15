@@ -5,15 +5,6 @@ name := "ddos-framework"
 
 scalaVersion := "3.2.1"
 
-lazy val app = (project in file("app"))
-  .settings(
-      //assembly / mainClass := Some("it.unibo.pps.launcher.Launcher")
-  )
-
-lazy val utils = (project in file("utils"))
-  .settings(
-      assembly / assemblyJarName := s"ddos-framework-$version.jar"
-  )
 
 ThisBuild / assemblyMergeStrategy := {
     case PathList("META-INF", _*) => MergeStrategy.discard
