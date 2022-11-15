@@ -5,15 +5,6 @@ name := "ddos-framework"
 
 scalaVersion := "3.2.1"
 
-lazy val app = (project in file("app"))
-  .settings(
-      //assembly / mainClass := Some("it.unibo.pps.launcher.Launcher")
-  )
-
-lazy val utils = (project in file("utils"))
-  .settings(
-      assembly / assemblyJarName := s"ddos-framework-$version.jar"
-  )
 
 ThisBuild / assemblyMergeStrategy := {
     case PathList("META-INF", _*) => MergeStrategy.discard
@@ -35,6 +26,6 @@ libraryDependencies += "it.unibo.alice.tuprolog" % "2p-core" % "4.1.1"
 libraryDependencies += "it.unibo.alice.tuprolog" % "2p-ui" % "4.1.1"
 
 libraryDependencies ++= Seq(
-    "com.typesafe.akka" %% "akka-actor" % AkkaVersion,
-    "com.typesafe.akka" %% "akka-testkit" % AkkaVersion % Test
+    "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
+    "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test
 )
