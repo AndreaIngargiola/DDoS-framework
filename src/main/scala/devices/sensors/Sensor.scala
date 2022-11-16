@@ -6,15 +6,20 @@ package devices.sensors
 trait Sensor[A] {
   var internalStatus: A = _
 
-  def processingFunction: A => A = ???
+  def processingFunction: A => A
   def setStatus(phyInput: A): Unit =
     internalStatus = processingFunction(phyInput)
-  def sendMessage(msg: GetStatus): Unit = ???
+  def sendMessage(msg: GetStatus): Unit
 }
 
 trait BasicSensor[A] {
   self: Sensor[A] =>
+  override def processingFunction: A => A = x => x
 }
+
+trait ProcessedDataSensor[A,B](processFun: B => A):
+  self: Sensor[A] =>
+  override def processingFunction: B => A = processFun
 
 /*
 * Actor of a basic sensor
