@@ -6,7 +6,6 @@ import scala.collection.immutable.{HashMap, ListMap}
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import it.pps.ddos.devices.actuators.State
-import it.pps.ddos.devices.actuators.{Message, MessageWithReply}
 
 type ConditionalFunction = (msg: Any) => Boolean
 

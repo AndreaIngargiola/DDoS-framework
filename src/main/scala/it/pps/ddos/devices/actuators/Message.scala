@@ -1,6 +1,7 @@
 package it.pps.ddos.devices.actuators
 
 import akka.actor.typed.ActorRef
+import it.pps.ddos.devices.actuators.Message
 
 trait Message[T]
 

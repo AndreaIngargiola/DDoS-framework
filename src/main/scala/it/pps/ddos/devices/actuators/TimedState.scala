@@ -5,7 +5,6 @@ import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
 
 import scala.concurrent.duration.FiniteDuration
 import it.pps.ddos.devices.actuators.LateInit
-import it.pps.ddos.devices.actuators.Timeout
 
 private case object TimerKey
 
