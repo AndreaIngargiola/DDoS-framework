@@ -12,13 +12,15 @@ import it.pps.ddos.devices.sensors.{Message, GetStatus, SetStatus}
 /*
 * Define logic sensors
 * */
-trait Sensor[A]:
+trait Sensor[A, B](val dest: ActorRef[_]):
+  var selfRef: ActorRef[Command]
   var internalStatus: A = _
 
-  def processingFunction: A => A
-  def setStatus(phyInput: A): Unit =
+  def processingFunction: B => A
+  def setStatus(phyInput: B): Unit =
     internalStatus = processingFunction(phyInput)
-  def sendMessage(msg: GetStatus): Unit
+  def sendStatus(master: ActorRef): Unit =
+    dest ! Status(internalStatus)
 
 
 trait BasicSensor[A]:
@@ -37,13 +39,9 @@ object SensorActor:
   def apply[T](sensor: Sensor[T]): Behavior[Message] =
     Behaviors.receiveMessage { message =>
       message match
-        case GetStatus() =>
-          println("Get message received. Getting status.. ")
-          println("Sensor status: " + sensor.internalStatus)
-          Behaviors.same
-        case SetStatus(_) =>
-          println("Set message received. Setting status.. ")
-          sensor.setStatus(_)
+        case SendStatus(ref) =>
+          println("Sending status.. ")
+          sensor.sendStatus(ref)
           Behaviors.same
     }
 /*
