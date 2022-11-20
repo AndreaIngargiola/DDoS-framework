@@ -1,11 +1,10 @@
-package it.pps.ddos.devices.actuators
+package it.pps.ddos.devices.actuator
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
 
 import scala.concurrent.duration.FiniteDuration
-import it.pps.ddos.devices.actuators.LateInit
-import it.pps.ddos.devices.actuators.Timeout
+import it.pps.ddos.devices.actuator.LateInit
 
 private case object TimerKey
 

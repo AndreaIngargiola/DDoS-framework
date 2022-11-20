@@ -4,23 +4,24 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import akka.actor.typed.scaladsl.AskPattern.Askable
 import akka.actor.typed.scaladsl.AskPattern.schedulerFromActorSystem
-import it.pps.ddos.devices.actuators.{Approved, Denied, LateInit, Message, MessageWithReply, MessageWithoutReply, State}
+import it.pps.ddos.devices.actuator.{Approved, Denied, LateInit, Message, MessageWithReply, MessageWithoutReply, State}
 
 import scala.annotation.targetName
 import scala.concurrent.duration.Duration
 
 object Actuator {
-    def apply[T](fsm: FSM[T]) = new Actuator(fsm)
+    def apply[T](fsm: FSM[T]) = new Actuator(fsm).actuatorBehavior()
 }
 class Actuator[T](val FSM: FSM[T]):
     private var currentState: State[T] = FSM.getInitialState
     private var pendingState: Option[State[T]] = None
-    var utilityActor: ActorSystem[Message[T]] = ActorSystem(currentState.getBehavior, "utilityActor")
-    val actuatorActor: ActorSystem[Message[T]] = ActorSystem(actuatorBehavior(), "Actuator")
 
-    private def actuatorBehavior(): Behavior[Message[T]] = Behaviors.setup[Message[T]](_ => Behaviors.receiveMessage { message =>
+    private def actuatorBehavior(): Behavior[Message[T]] = Behaviors.setup[Message[T]](context => Behaviors.receiveMessage { message =>
+
+        var utilityActor: ActorRef[Message[T]] = context.spawn(currentState.getBehavior, "utilityActor")
+
         currentState match
-            case init: LateInit => init.setActorRef(actuatorActor)
+            case init: LateInit => init.setActorRef(context.self)
             case _ =>
         message match
             case MessageWithoutReply(msg) =>
@@ -28,7 +29,7 @@ class Actuator[T](val FSM: FSM[T]):
                     case state =>
                         pendingState = Some(state)
                         implicit val timeout: akka.util.Timeout = Duration.create(10, "seconds")
-                        implicit val system: ActorSystem[Message[T]] = actuatorActor
+                        implicit val system: ActorSystem[Nothing] = context.system
                         utilityActor ? (replyTo => MessageWithReply(msg, replyTo)) //TODO handle future
                     case null =>
                         println("No action found for this message")
@@ -37,7 +38,7 @@ class Actuator[T](val FSM: FSM[T]):
                 if (pendingState.isDefined)
                     currentState = pendingState.get
                     pendingState = None
-                    utilityActor.terminate()
+                    context.stop(utilityActor)
                     utilityActor = ActorSystem(currentState.getBehavior, "utilityActor")
                 else
                     println("No pending state")
@@ -46,9 +47,6 @@ class Actuator[T](val FSM: FSM[T]):
                 pendingState = None
                 Behaviors.same
     })
-
-    @targetName("tell")
-    def ! (msg: Message[T]): Unit = actuatorActor ! msg
 
 
 //object main extends App:

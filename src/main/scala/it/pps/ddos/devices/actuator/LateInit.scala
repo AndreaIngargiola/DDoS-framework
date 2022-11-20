@@ -1,4 +1,4 @@
-package it.pps.ddos.devices.actuators
+package it.pps.ddos.devices.actuator
 
 import akka.actor.typed.ActorRef
 

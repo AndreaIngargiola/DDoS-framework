@@ -1,12 +1,11 @@
-package it.pps.ddos.devices.actuators
+package it.pps.ddos.devices.actuator
 import akka.actor.typed.ActorRef
 
 import scala.annotation.targetName
 import scala.collection.immutable.{HashMap, ListMap}
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import it.pps.ddos.devices.actuators.State
-import it.pps.ddos.devices.actuators.{Message, MessageWithReply}
+import it.pps.ddos.devices.actuator.State
 
 type ConditionalFunction = (msg: Any) => Boolean
 
