@@ -2,18 +2,14 @@ package it.pps.ddos.devices.sensors.module
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.scaladsl.TimerScheduler
-import it.pps.ddos.devices.sensors.{Message, Sensor}
+import it.pps.ddos.devices.sensors.{Sensor}
 
 import scala.concurrent.duration.FiniteDuration
 
-trait ConditionalModule[A](condition: Boolean, replyTo: ActorRef[A]):
-    self: Sensor[A] =>
-    override def setStatus(phyInput: A): Unit =
-        this.internalStatus = processingFunction(phyInput)
-        if condition then replyTo ! internalStatus
+trait Broadcast
 
-
-trait TimedModule[A](timer: TimerScheduler[Message], val duration: FiniteDuration, var status: A):
-    self: Sensor[A] =>
-    status = self.internalStatus
-    override def setStatus(phyInput: A): Unit = self.setStatus(phyInput)
+trait Private[A, B]:
+    self: Sensor[A, B] =>
+    override def propagate(sensorID: ActorRef[Message], requester: ActorRef[Message]): Unit = requester match
+        case sensorID.equals(requester) => self.propagate(sensorId, requester)
+        case _ =>
