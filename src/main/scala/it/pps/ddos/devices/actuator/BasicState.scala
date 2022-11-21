@@ -19,3 +19,5 @@ class BasicState[T](name: String) extends State[T](name):
     }
 
     override def getBehavior: Behavior[Message[T]] = behavior
+
+    override def copy(): State[T] = BasicState[T](name)

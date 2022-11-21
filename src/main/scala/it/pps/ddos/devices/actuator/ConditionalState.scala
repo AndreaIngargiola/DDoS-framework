@@ -23,3 +23,5 @@ class ConditionalState[T](name: String, condFunction: ConditionalFunction) exten
     }
 
     override def getBehavior: Behavior[Message[T]] = behavior
+
+    override def copy(): State[T] = ConditionalState(name, condFunction)

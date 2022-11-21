@@ -13,7 +13,7 @@ type Sender[T] = () => T
 class TimedState[T] (name: String, timer: FiniteDuration, senderFunction: Sender[T]) extends State[T](name), LateInit:
 
     var actuator: Option[ActorRef[Message[T]]] = None
-    val behavior: Behavior[Message[T]] = Behaviors.withTimers(timers => idle(timers, actuator, timer))
+    lazy val behavior: Behavior[Message[T]] = Behaviors.withTimers(timers => idle(timers, actuator, timer))
 
     private def idle(timers: TimerScheduler[Message[T]], target: Option[ActorRef[Message[T]]],
                      after: FiniteDuration): Behavior[Message[T]] = Behaviors.receiveMessage[Message[T]]{ msg =>
@@ -33,3 +33,5 @@ class TimedState[T] (name: String, timer: FiniteDuration, senderFunction: Sender
     override def getBehavior: Behavior[Message[T]] = behavior
 
     override def setActorRef[T](ref: ActorRef[Message[T]]): Unit = actuator
+
+    override def copy(): State[T] = TimedState(name, timer, senderFunction)
