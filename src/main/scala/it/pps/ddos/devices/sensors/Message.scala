@@ -1,6 +1,8 @@
 package it.pps.ddos.devices.sensors
 
-trait Message
-
-case class SendStatus(master: ActorRef) extends Message
-case class SelfMessage() extends Message
+/* Definition of the message protocol shared by the sensors  */
+object SensorProtocol:
+  trait Message
+  case class PropagateStatus(requester: ActorRef[Message]) extends Message
+  case class Status[T](author: ActorRef[Message], value: T) extends Message
+  case class UpdateStatus[T](value: T) extends Message
