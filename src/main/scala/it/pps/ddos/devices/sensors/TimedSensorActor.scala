@@ -2,7 +2,7 @@ package it.pps.ddos.devices.sensors
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import it.pps.ddos.devices.actuators.Message
+import it.pps.ddos.devices.sensors.SensorProtocol.Message
 import it.pps.ddos.devices.sensors.module.TimedModule
 
 private case object SensorTimerKey
