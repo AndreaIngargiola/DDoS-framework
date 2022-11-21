@@ -5,7 +5,6 @@ name := "ddos-framework"
 
 scalaVersion := "3.2.1"
 
-
 ThisBuild / assemblyMergeStrategy := {
     case PathList("META-INF", _*) => MergeStrategy.discard
     case _ => MergeStrategy.first
@@ -27,5 +26,6 @@ libraryDependencies += "it.unibo.alice.tuprolog" % "2p-ui" % "4.1.1"
 
 libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,
-    "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test
+    "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
+    "com.typesafe.akka" %% "akka-cluster-typed" % AkkaVersion,
 )
