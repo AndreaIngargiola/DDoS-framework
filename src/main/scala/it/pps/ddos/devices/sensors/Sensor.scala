@@ -1,13 +1,5 @@
 package it.pps.ddos.devices.sensors
 
-import it.pps.ddos.devices.sensors.SensorProtocol.SendStatus
-
-import akka.actor.typed.Behavior
-import akka.actor.typed.scaladsl.Behaviors
-import akka.actor.typed.{ActorRef, Behavior}
-import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
-
-
 import scala.concurrent.duration.FiniteDuration
 
 /*
@@ -23,12 +15,10 @@ trait Sensor[A, B](val destination: ActorRef[_]):
     case None() =>
 
 
-trait BasicSensor[A]:
-  self: Sensor[A] =>
+class BasicSensor[A](destination: ActorRef[Status[_]]) extends Sensor[A, A](destination) :
   override def processingFunction: A => A = x => x
 
-trait ProcessedDataSensor[A,B](processFun: B => A):
-  self: Sensor[A] =>
+class ProcessedDataSensor[A, B](destination: ActorRef[Status[_]], processFun: B => A) extends Sensor[A, B](destination) :
   override def processingFunction: B => A = processFun
 
 /*
