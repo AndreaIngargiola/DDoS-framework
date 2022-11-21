@@ -1,26 +1,26 @@
 package it.pps.ddos.devices.sensors
 
+import it.pps.ddos.devices.sensors.SensorProtocol.SendStatus
+
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
 
+
 import scala.concurrent.duration.FiniteDuration
-import it.pps.ddos.devices.sensors.{Message, GetStatus, SetStatus}
 
 /*
 * Define logic sensors
 * */
-trait Sensor[A, B](val dest: ActorRef[_]):
-  var selfRef: ActorRef[Command]
-  var internalStatus: A = _
+trait Sensor[A, B](val destination: ActorRef[_]):
+  var status: Option[A] = Option.empty
 
-  def processingFunction: B => A
-  def setStatus(phyInput: B): Unit =
-    internalStatus = processingFunction(phyInput)
-  def sendStatus(master: ActorRef): Unit =
-    dest ! Status(internalStatus)
+  def preProcess: B => A
+  def update(physicalInput: B) = status = Option(preProcess(physicalInput))
+  def propagate(sensorID: ActorRef[Message], requester: ActorRef[Message]): Unit = status match
+    case Some(value) => destination ! Status[A](sensorID, value)
+    case None() =>
 
 
 trait BasicSensor[A]:
@@ -39,9 +39,12 @@ object SensorActor:
   def apply[T](sensor: Sensor[T]): Behavior[Message] =
     Behaviors.receiveMessage { message =>
       message match
-        case SendStatus(ref) =>
+        case PropagateStatus(requesterRef) =>
           println("Sending status.. ")
-          sensor.sendStatus(ref)
+          sensor.propagate(context.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
+          Behaviors.same
+        case UpdateStatus(value: B) =>
+          sensor.update(value)
           Behaviors.same
     }
 /*
