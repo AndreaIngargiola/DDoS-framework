@@ -1,4 +1,6 @@
-package it.pps.ddos.devices.sensors
+package it.pps.ddos.devices.sensor
+
+import akka.actor.typed.ActorRef
 
 /* Definition of the message protocol shared by the sensors  */
 object SensorProtocol:
