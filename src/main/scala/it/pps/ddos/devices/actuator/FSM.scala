@@ -12,7 +12,7 @@ class FSM[T](val fromState: Option[State[T]], val fromMessage: Option[T], val ma
   def _U(fsm: FSM[T]) = new FSM(fromState, fromMessage, map ++ fsm.map)
   def apply(s: State[T], m: T): State[T] = map.getOrElse((s,m), s)
   override def toString: String = map.toString
-  def getInitialState: State[T] = map.head._2
+  def getInitialState: State[T] = map.head._1._1
 
 
 
