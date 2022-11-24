@@ -2,8 +2,8 @@ package it.pps.ddos.devices.sensors
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import it.pps.ddos.devices.sensors.SensorProtocol.Message
-import it.pps.ddos.devices.sensors.module.TimedModule
+import it.pps.ddos.devices.sensor.SensorProtocol._
+import it.pps.ddos.devices.sensor.module.TimedModule
 
 private case object SensorTimerKey
 
@@ -21,7 +21,7 @@ object TimedSensorActor:
                 Behaviors.receiveMessage { message =>
                     message match
                         case Tick =>
-                            timedSensor.setStatus(timedSensor.status)
+                            timedSensor.update(timedSensor.status)
                             Behaviors.same
                 }
             }
