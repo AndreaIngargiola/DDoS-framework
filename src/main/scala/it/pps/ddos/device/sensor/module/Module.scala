@@ -1,9 +1,9 @@
-package it.pps.ddos.devices.sensor.module
+package it.pps.ddos.device.sensor.module
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.scaladsl.TimerScheduler
-import it.pps.ddos.devices.sensor.Sensor
-import it.pps.ddos.devices.sensor.SensorProtocol.*
+import it.pps.ddos.device.sensor.Sensor
+import it.pps.ddos.device.sensor.SensorProtocol.*
 
 import scala.concurrent.duration.FiniteDuration
 

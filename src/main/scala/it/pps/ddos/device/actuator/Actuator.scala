@@ -1,10 +1,9 @@
-package main.scala.it.pps.ddos.devices.actuators
+package it.pps.ddos.device.actuator
 
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.scaladsl.AskPattern.Askable
 import akka.actor.typed.scaladsl.AskPattern.schedulerFromActorSystem
-import it.pps.ddos.devices.actuator.{Approved, Denied, ForceStateChange, GetState, LateInit, Message, MessageWithReply, MessageWithoutReply, SetActuatorRef, State, Stop, TellState}
 
 import scala.annotation.targetName
 import scala.concurrent.Await

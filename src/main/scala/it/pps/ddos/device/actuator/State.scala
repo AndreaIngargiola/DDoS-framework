@@ -1,7 +1,6 @@
-package it.pps.ddos.devices.actuator
+package it.pps.ddos.device.actuator
 
 import akka.actor.typed.Behavior
-import main.scala.it.pps.ddos.devices.actuators.FSM
 
 import scala.collection.immutable.ListMap
 

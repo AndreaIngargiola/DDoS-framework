@@ -1,6 +1,4 @@
-package main.scala.it.pps.ddos.devices.actuators
-
-import it.pps.ddos.devices.actuator.State
+package it.pps.ddos.device.actuator
 
 import scala.annotation.targetName
 import scala.collection.immutable.ListMap

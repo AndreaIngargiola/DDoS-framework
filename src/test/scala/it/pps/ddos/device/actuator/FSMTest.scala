@@ -1,12 +1,10 @@
-package it.pps.ddos.devices.actuator
+package it.pps.ddos.device.actuator
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.immutable.ListMap
-import main.scala.it.pps.ddos.devices.actuators.FSM
-import it.pps.ddos.devices.actuator.State
 
 class FSMTest extends AnyFlatSpec:
   "A Finite State Machine" should "be the result of the -- operator between an instance of State[T] and T" in testDSLPartialCreation()

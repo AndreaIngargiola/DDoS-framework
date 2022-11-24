@@ -1,9 +1,9 @@
-package it.pps.ddos.devices.actuator
+package it.pps.ddos.device.actuator
 
 import akka.actor.testkit.typed.Effect.Spawned
 import akka.actor.testkit.typed.scaladsl.BehaviorTestKit
 import akka.actor.typed.Behavior
-import main.scala.it.pps.ddos.devices.actuators.{Actuator, BasicState, FSM}
+import it.pps.ddos.device.actuator.BasicState
 import org.scalatest.flatspec.AnyFlatSpec
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 

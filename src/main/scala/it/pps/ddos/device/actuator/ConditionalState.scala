@@ -1,11 +1,10 @@
-package it.pps.ddos.devices.actuator
+package it.pps.ddos.device.actuator
 import akka.actor.typed.ActorRef
 
 import scala.annotation.targetName
 import scala.collection.immutable.{HashMap, ListMap}
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import it.pps.ddos.devices.actuator.State
 
 type ConditionalFunction[T] = (msg: T, args: Seq[T]) => Boolean
 
@@ -16,7 +15,6 @@ object ConditionalState {
 class ConditionalState[T](name: String, condFunction: ConditionalFunction[T]) extends State[T](name):
 
     private val behavior: Behavior[Message[T]] = Behaviors.receiveMessage[Message[T]] { msg =>
-//        println(s"State > Received message $msg")
         msg match
             case MessageWithReply(msg, replyTo, args*) =>
                 println(condFunction(msg, args))
