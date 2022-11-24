@@ -1,7 +1,8 @@
-package it.pps.ddos.devices.sensors
+package it.pps.ddos.devices.sensor
 
-import akka.actor.typed.ActorRef
-import it.pps.ddos.devices.sensors.SensorProtocol.{Message, Status}
+import akka.actor.typed.scaladsl.Behaviors
+import akka.actor.typed.{ActorRef, Behavior}
+import it.pps.ddos.devices.sensor.SensorProtocol._
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -31,17 +32,20 @@ class ProcessedDataSensor[A, B](destination: ActorRef[Status[_]], processFun: B 
 * */
 object SensorActor:
 
-  def apply[T](sensor: Sensor[T]): Behavior[Message] =
-    Behaviors.receiveMessage { message =>
-      message match
-        case PropagateStatus(requesterRef) =>
-          println("Sending status.. ")
-          sensor.propagate(context.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
-          Behaviors.same
-        case UpdateStatus(value: B) =>
-          sensor.update(value)
-          Behaviors.same
+  def apply[A, B](sensor: Sensor[A, B]): Behavior[Message] =
+    Behaviors.setup { context =>
+      Behaviors.receiveMessage { message =>
+        message match
+          case PropagateStatus(requesterRef) =>
+            println("Sending status.. ")
+            sensor.propagate(context.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
+            Behaviors.same
+          case UpdateStatus(value: B) =>
+            sensor.update(value)
+            Behaviors.same
+      }
     }
+
 /*
 * Mixin example
 * */
