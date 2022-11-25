@@ -1,4 +1,4 @@
-package it.pps.ddos.devices.sensor.module
+package it.pps.ddos.devices.sensor
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.scaladsl.TimerScheduler
@@ -20,9 +20,13 @@ trait TimedModule[A](timer: TimerScheduler[Message], val duration: FiniteDuratio
     status = self.status
     override def update(phyInput: A): Unit = self.update(phyInput)
 
-trait Private[A, B]:
-    self: Sensor[A, B] =>
-    override def propagate(sensorID: ActorRef[Message], requester: ActorRef[Message]): Unit =
-        if requester == sensorID then self.propagate(sensorID, requester)
-    override def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit
-    override def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit
+trait Public[A]:
+    self: Sensor[A, _] =>
+        override def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit = status match
+            case Some(value) => for(actor <- destinations) actor ! Status[A](selfId, value)
+            case None =>
+        override def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = destinations.contains(toAdd) match
+            case false => destinations = toAdd :: destinations; toAdd ! SubscribeAck(selfId)
+            case _ =>
+        override def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit =
+            destinations = destinations.filter(_ != toRemove); toRemove ! UnsubscribeAck(selfId)

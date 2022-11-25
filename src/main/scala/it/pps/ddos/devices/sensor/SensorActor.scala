@@ -2,7 +2,7 @@ package it.pps.ddos.devices.sensor
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import it.pps.ddos.devices.sensor.SensorProtocol.{Message, PropagateStatus, UpdateStatus}
+import it.pps.ddos.devices.sensor.SensorProtocol.{Message, PropagateStatus, UpdateStatus, Subscribe, SubscribeAck, Unsubscribe, UnsubscribeAck}
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -24,6 +24,12 @@ object SensorActor:
       Behaviors.same
     case UpdateStatus(value: B) =>
       sensor.update(value)
+      Behaviors.same
+    case Subscribe(replyTo) =>
+      sensor.subscribe(ctx.self, replyTo)
+      Behaviors.same
+    case Unsubscribe(replyTo) =>
+      sensor.unsubscribe(ctx.self, replyTo)
       Behaviors.same
   }
 
