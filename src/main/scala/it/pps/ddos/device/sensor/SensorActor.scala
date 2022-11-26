@@ -22,7 +22,7 @@ object SensorActor:
       sensor.propagate(ctx.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
       Behaviors.same
     case UpdateStatus(value: B) =>
-      sensor.update(value)
+      sensor.update(ctx.self, value)
       Behaviors.same
     case Subscribe(replyTo) =>
       sensor.subscribe(ctx.self, replyTo)
