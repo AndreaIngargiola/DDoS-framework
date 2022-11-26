@@ -31,9 +31,9 @@ object SensorActor:
       Behaviors.same
   }
 
-  def getTimedBehavior[A, B](sensor: Sensor[A, B]): PartialFunction[Message, Behavior[Message]] = {
+  def getTimedBehavior[A, B](sensor: Sensor[A, B], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = {
     case Tick =>
-      //sensor.propagate() //TODO
+      sensor.propagate(ctx.self, ctx.self)
       Behaviors.same
   }
 
@@ -41,7 +41,7 @@ object SensorActor:
     Behaviors.setup { context =>
       Behaviors.withTimers { timer =>
         timer.startTimerAtFixedRate(SensorTimerKey, Tick, duration)
-        Behaviors.receiveMessagePartial(getBasicBehavior(sensor, context).orElse(getTimedBehavior(sensor)))
+        Behaviors.receiveMessagePartial(getBasicBehavior(sensor, context).orElse(getTimedBehavior(sensor, context)))
       }
     }
 
