@@ -1,8 +1,8 @@
-package it.pps.ddos.devices.sensor
+package it.pps.ddos.device.sensor
 
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
-import it.pps.ddos.devices.sensor.SensorProtocol.*
+import it.pps.ddos.device.sensor.SensorProtocol.*
 import scala.collection.immutable.List
 
 import scala.concurrent.duration.FiniteDuration

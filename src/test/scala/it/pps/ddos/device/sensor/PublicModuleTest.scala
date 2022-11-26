@@ -1,10 +1,10 @@
-package it.pps.ddos.devices.sensor
+package it.pps.ddos.device.sensor
 
 import akka.actor.testkit.typed.Effect.Spawned
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorRef
-import it.pps.ddos.devices.sensor.SensorProtocol.*
-import it.pps.ddos.devices.sensor.{BasicSensor, Public, Sensor, SensorActor}
+import it.pps.ddos.device.sensor.SensorProtocol.*
+import it.pps.ddos.device.sensor.{BasicSensor, Public, Sensor, SensorActor}
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.immutable.List
