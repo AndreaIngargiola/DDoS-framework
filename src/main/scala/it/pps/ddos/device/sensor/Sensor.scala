@@ -3,28 +3,33 @@ package it.pps.ddos.device.sensor
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import it.pps.ddos.device.sensor.SensorProtocol.*
+import scala.collection.immutable.List
 
 import scala.concurrent.duration.FiniteDuration
 
 /*
 * Define logic sensors
 * */
-trait Sensor[A, B](private var destination: ActorRef[Status[_]]):
-  private var status: Option[A] = Option.empty
+trait Sensor[A, B](protected var destinations: List[ActorRef[Status[_]]]):
+  protected var status: Option[A] = Option.empty
 
   def preProcess: B => A
 
-  def update(sensorID: ActorRef[Message], physicalInput: B): Unit = status = Option(preProcess(physicalInput))
+  def update(selfId: ActorRef[Message], physicalInput: B): Unit = status = Option(preProcess(physicalInput))
 
-  def propagate(sensorID: ActorRef[Message], requester: ActorRef[Message]): Unit = status match
-    case Some(value) => destination ! Status[A](sensorID, value)
-    case None =>
+  def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
+    if requester == selfId then status match
+      case Some(value) => for (actor <- destinations) actor ! Status[A](selfId, value)
+      case None =>
 
+  def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = ()
 
-class BasicSensor[A](destination: ActorRef[Status[_]]) extends Sensor[A, A](destination) :
+  def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit = ()
+
+class BasicSensor[A](destinations: List[ActorRef[Status[_]]]) extends Sensor[A, A](destinations) :
   override def preProcess: A => A = x => x
 
-class ProcessedDataSensor[A, B](destination: ActorRef[Status[_]], processFun: B => A) extends Sensor[A, B](destination) :
+class ProcessedDataSensor[A, B](destinations: List[ActorRef[Status[_]]], processFun: B => A) extends Sensor[A, B](destinations) :
   override def preProcess: B => A = processFun
 
 /*

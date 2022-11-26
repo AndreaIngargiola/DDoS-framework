@@ -2,8 +2,7 @@ package it.pps.ddos.device.sensor
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import it.pps.ddos.device.sensor.SensorProtocol.{Message, PropagateStatus, UpdateStatus}
-
+import it.pps.ddos.device.sensor.SensorProtocol._
 import scala.concurrent.duration.FiniteDuration
 
 /*
@@ -19,11 +18,16 @@ object SensorActor:
 
   def getBasicBehavior[A, B](sensor: Sensor[A, B], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = {
     case PropagateStatus(requesterRef) =>
-      println("Sending status.. ")
       sensor.propagate(ctx.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
       Behaviors.same
     case UpdateStatus(value: B) =>
       sensor.update(ctx.self, value)
+      Behaviors.same
+    case Subscribe(replyTo) =>
+      sensor.subscribe(ctx.self, replyTo)
+      Behaviors.same
+    case Unsubscribe(replyTo) =>
+      sensor.unsubscribe(ctx.self, replyTo)
       Behaviors.same
   }
 
