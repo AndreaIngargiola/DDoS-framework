@@ -7,14 +7,12 @@ import it.pps.ddos.device.sensor.SensorProtocol.*
 
 import scala.concurrent.duration.FiniteDuration
 
-trait Condition[A, B](condition: Boolean, replyTo: ActorRef[A]):
+trait Condition[A, B](condition: A|B=>Boolean, replyTo: ActorRef[Message]):
   self: Sensor[A, B] =>
   override def update(selfId: ActorRef[Message], phyInput: B): Unit =
-    self.update(selfId, phyInput)
-    condition match
-      case true =>
-        self.status = Option(preProcess(phyInput))
-        replyTo ! self.status.get
+    self.status = Option(preProcess(phyInput))
+    condition(self.status.get) match
+      case true => replyTo ! Status[A](selfId, self.status.get)
       case _ =>
 
 trait Public[A]:
