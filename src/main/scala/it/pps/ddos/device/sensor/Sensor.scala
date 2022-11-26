@@ -9,12 +9,12 @@ import scala.concurrent.duration.FiniteDuration
 /*
 * Define logic sensors
 * */
-trait Sensor[A, B](val destination: ActorRef[Status[_]]):
-  var status: Option[A] = Option.empty
+trait Sensor[A, B](private var destination: ActorRef[Status[_]]):
+  private var status: Option[A] = Option.empty
 
   def preProcess: B => A
 
-  def update(physicalInput: B): Unit = status = Option(preProcess(physicalInput))
+  def update(sensorID: ActorRef[Message], physicalInput: B): Unit = status = Option(preProcess(physicalInput))
 
   def propagate(sensorID: ActorRef[Message], requester: ActorRef[Message]): Unit = status match
     case Some(value) => destination ! Status[A](sensorID, value)

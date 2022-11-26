@@ -23,13 +23,13 @@ object SensorActor:
       sensor.propagate(ctx.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
       Behaviors.same
     case UpdateStatus(value: B) =>
-      sensor.update(value)
+      sensor.update(ctx.self, value)
       Behaviors.same
   }
 
   def getTimedBehavior[A, B](sensor: Sensor[A, B]): PartialFunction[Message, Behavior[Message]] = {
     case Tick =>
-      //sensor.update(sensor.status.get)
+      //sensor.propagate() //TODO
       Behaviors.same
   }
 

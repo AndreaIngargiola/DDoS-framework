@@ -7,16 +7,11 @@ import it.pps.ddos.device.sensor.SensorProtocol.*
 
 import scala.concurrent.duration.FiniteDuration
 
-trait ConditionalModule[A](condition: Boolean, replyTo: ActorRef[A]):
-    self: Sensor[A, A] =>
-    override def update(phyInput: A): Unit = condition match
+trait Condition[A, B](val condition: Boolean):
+    self: Sensor[A, B] =>
+    override def update(sensorID: ActorRef[Message], phyInput: B): Unit = 
+        self.update(sensorID, phyInput)
+        condition match
         case true =>
-            self.status = Option(preProcess(phyInput))
-            replyTo ! self.status.get
+            sensorID ! PropagateStatus(sensorID)
         case _ =>
-
-
-trait TimedModule[A](timer: TimerScheduler[Message], val duration: FiniteDuration, var status: A):
-    self: Sensor[A, A] =>
-    status = self.status
-    override def update(phyInput: A): Unit = self.update(phyInput)
