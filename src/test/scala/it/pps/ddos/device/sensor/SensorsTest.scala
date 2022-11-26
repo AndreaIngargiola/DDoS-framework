@@ -39,7 +39,7 @@ class SensorsTest extends AnyFlatSpec:
 
   private def testPublicBasicSensorStatusWrong(): Unit =
     //test updating with wrong type(need to be String for working)
-    assertTypeError("sensor.update(5)")
+    assertTypeError("sensor.update(sensorBasicActor.ref,5)")
 
 
   ///PROCESSED DATA SENSOR TESTS
@@ -58,5 +58,5 @@ class SensorsTest extends AnyFlatSpec:
 
   private def testPublicProcessedDataSensorStatusWrong(): Unit =
     //test updating with wrong type(need to be Int for working)
-    assertTypeError("sensor.update(0.1)")
+    assertTypeError("sensor.update(sensorProcessedActor.ref,0.1)")
 
