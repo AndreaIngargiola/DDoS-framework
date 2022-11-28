@@ -10,21 +10,11 @@ import scala.concurrent.duration.FiniteDuration
 /*
 * Define logic sensors
 * */
-trait Sensor[A, B](protected var destinations: List[ActorRef[Status[_]]]):
-  protected var status: Option[A] = Option.empty
+trait Sensor[A, B](protected var destinations: ActorRef[Status[_]]*) extends Device[A](destinations.toList):
 
   def preProcess: B => A
 
-  def update(selfId: ActorRef[Message], physicalInput: B): Unit = status = Option(preProcess(physicalInput))
-
-  def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
-    if requester == selfId then status match
-      case Some(value) => for (actor <- destinations) actor ! Status[A](selfId, value)
-      case None =>
-
-  def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = ()
-
-  def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit = ()
+  def update(selfId: ActorRef[Message], physicalInput: B): Unit = self.currentState = Option(preProcess(physicalInput))
 
 class BasicSensor[A](destinations: List[ActorRef[Status[_]]]) extends Sensor[A, A](destinations) :
   override def preProcess: A => A = x => x

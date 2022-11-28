@@ -14,8 +14,9 @@ object Actuator {
     def apply[T](fsm: FSM[T]): Behavior[Message[T]] = new Actuator(fsm).actuatorBehavior()
 }
 
-class Actuator[T](val FSM: FSM[T]):
+class Actuator[T](val FSM: FSM[T], var destinations: ActorRef[Message]*) extends Device[String](destinations.toList):
     private var currentState: State[T] = FSM.getInitialState
+    this.status = currentState.name
     private var pendingState: Option[State[T]] = None
     println(s"Initial state ${FSM.getInitialState.name}")
 
@@ -27,7 +28,7 @@ class Actuator[T](val FSM: FSM[T]):
                 case MessageWithoutReply(msg, args*) => messageWithoutReply(msg, _utilityActor, context, args)
                 case Approved() => _utilityActor = approved(_utilityActor, context)
                 case Denied() => denied()
-                case GetState(replyTo) => getState(replyTo)
+                case GetState(replyTo) => getState(replyTo) //TODO this.propagate
                 case ForceStateChange(transition) => forceStateChange(transition)
             Behaviors.same
         })
@@ -35,6 +36,7 @@ class Actuator[T](val FSM: FSM[T]):
     private def approved(utilityActor: ActorRef[Message[T]], context: ActorContext[Message[T]]): ActorRef[Message[T]] =
         if (pendingState.isDefined)
             currentState = pendingState.get
+            this.status = currentState.name
             pendingState = None
             utilityActor ! Stop()
             spawnUtilityActor(context)

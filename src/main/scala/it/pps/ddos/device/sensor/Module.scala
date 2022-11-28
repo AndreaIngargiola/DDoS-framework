@@ -16,7 +16,7 @@ trait Condition[A, B](condition: A|B=>Boolean, replyTo: ActorRef[Message]):
       case _ =>
 
 trait Public[A]:
-  self: Sensor[A, _] =>
+  self: Device[A] =>
   override def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit = status match
     case Some(value) => for (actor <- destinations) actor ! Status[A](selfId, value)
     case None =>
@@ -28,3 +28,10 @@ trait Public[A]:
   override def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit =
     destinations = destinations.filter(_ != toRemove);
     toRemove ! UnsubscribeAck(selfId)
+
+trait Timer(val duration: FiniteDuration):
+  self: Device[_] =>
+
+
+
+

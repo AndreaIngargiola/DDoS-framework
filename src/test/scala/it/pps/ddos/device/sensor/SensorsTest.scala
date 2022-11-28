@@ -35,12 +35,12 @@ class SensorsTest extends AnyFlatSpec :
   val testKit = ActorTestKit()
 
   private def sendMsg(sensorActor: ActorRef[Message], testProbe: TestProbe[Message]): Unit =
-    sensorActor ! PropagateStatus(testProbe.ref)
+    sensorActor ! PropagateStatus(sensorActor.ref)
     Thread.sleep(800)
 
   ///BASIC SENSOR TESTS
   val testProbeBasic: TestProbe[Message] = testKit.createTestProbe[Message]()
-  val sensorBasic = new BasicSensor[String](List(testProbeBasic.ref)) with Public[String]
+  val sensorBasic = new BasicSensor[String](List(testProbeBasic.ref)) //with Public[String]
   val sensorBasicActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorBasic))
 
   private def testPublicBasicSensorSendCorrect(): Unit =
