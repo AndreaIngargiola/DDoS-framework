@@ -15,7 +15,7 @@ object SensorProtocol:
   case class Unsubscribe(replyTo: ActorRef[Message]) extends Message
   case class UnsubscribeAck(author: ActorRef[Message]) extends Message
 
-  case class MessageWithReply[T](message: T, replyTo: ActorRef[Message[T]], args: T*) extends Message
+  case class MessageWithReply[T](message: T, replyTo: ActorRef[Message], args: T*) extends Message
   case class MessageWithoutReply[T](message: T, args: T*) extends Message
   case class Approved() extends Message
   case class Denied() extends Message
