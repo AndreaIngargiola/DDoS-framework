@@ -11,7 +11,7 @@ import scala.concurrent.duration.FiniteDuration
 /*
 * Define logic sensors
 * */
-trait Sensor[A, B](protected var destinations: List[ActorRef[Status[_]]]) extends Device[A]:
+trait Sensor[A, B](destinations: List[ActorRef[Status[_]]]) extends Device[A]:
 
   def preProcess: B => A
 
