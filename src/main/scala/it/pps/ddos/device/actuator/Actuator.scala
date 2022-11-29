@@ -9,12 +9,13 @@ import scala.annotation.targetName
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.language.postfixOps
-import it.pps.ddos.device.sensor.SensorProtocol._
+import it.pps.ddos.device.sensor.SensorProtocol.*
 import it.pps.ddos.device.Device
+import it.pps.ddos.device.DeviceBehavior
 
-object Actuator {
+object Actuator:
     def apply[T](fsm: FSM[T]): Actuator[T] = new Actuator[T](fsm)
-}
+
 
 class Actuator[T](val FSM: FSM[T], var destinations: ActorRef[Message]*) extends Device[String](destinations.toList):
     private var currentState: State[T] = FSM.getInitialState
@@ -22,19 +23,26 @@ class Actuator[T](val FSM: FSM[T], var destinations: ActorRef[Message]*) extends
     private var pendingState: Option[State[T]] = None
     println(s"Initial state ${FSM.getInitialState.name}")
 
-    private def getBehavior(): Behavior[Message] = Behaviors.setup[Message](context =>
-        var _utilityActor: ActorRef[Message] = spawnUtilityActor(context)
-        Behaviors.receiveMessage { message =>
-            if(currentState.isInstanceOf[LateInit]) _utilityActor ! SetActuatorRef(context.self)
-            message match
-                case MessageWithoutReply(msg: T, args: Seq[T]) => messageWithoutReply(msg, _utilityActor, context, args)
-                case Approved() => _utilityActor = approved(_utilityActor, context)
-                case Denied() => denied()
-                case ForceStateChange(transition: T) => _utilityActor = forceStateChange(_utilityActor, context, transition)
-                case Subscribe(replyTo: ActorRef[Message]) => this.subscribe(context.self, replyTo)
-                case Unsubscribe(replyTo: ActorRef[Message]) => this.unsubscribe(context.self, replyTo)
-            Behaviors.same
-        })
+    private def getBehavior(): Behavior[Message] = Behaviors.setup[Message] { context =>
+      val _utilityActor: ActorRef[Message] = spawnUtilityActor(context)
+      if (currentState.isInstanceOf[LateInit]) _utilityActor ! SetActuatorRef(context.self)
+      Behaviors.receiveMessagePartial(basicActuatorBehavior(_utilityActor, context).orElse(DeviceBehavior.getBasicBehavior(this, context)))
+    }
+
+    private def basicActuatorBehavior(_utilityActor: ActorRef[Message], context: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = {
+      case MessageWithoutReply(msg: T, args: Seq[T]) =>
+        messageWithoutReply(msg, _utilityActor, context, args)
+        Behaviors.same
+      case Approved() =>
+        _utilityActor = approved(_utilityActor, context)
+        Behaviors.same
+      case Denied() =>
+        denied()
+        Behaviors.same
+      case ForceStateChange(transition: T) =>
+        _utilityActor = forceStateChange(_utilityActor, context, transition)
+        Behaviors.same
+    }
 
     private def approved(utilityActor: ActorRef[Message], context: ActorContext[Message]): ActorRef[Message] =
         if (pendingState.isDefined)
