@@ -1,4 +1,4 @@
-package it.pps.ddos.device.sensor
+package it.pps.ddos.device
 
 import akka.actor.typed.ActorRef
 

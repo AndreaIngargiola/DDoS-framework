@@ -4,7 +4,8 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 
 import it.pps.ddos.device.sensor.Sensor
-import it.pps.ddos.device.DeviceBehavior.{ Message, PropagateStatus, UpdateStatus, Subscribe, Unsubscribe }
+import it.pps.ddos.device.DeviceProtocol.{ Message, PropagateStatus, UpdateStatus, Subscribe, Unsubscribe }
+import it.pps.ddos.device.DeviceBehavior
 import it.pps.ddos.device.DeviceBehavior.Tick
 
 import scala.concurrent.duration.FiniteDuration
