@@ -2,50 +2,37 @@ package it.pps.ddos.device.sensor
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import it.pps.ddos.device.sensor.SensorProtocol._
+
+import it.pps.ddos.device.sensor.Sensor
+import it.pps.ddos.device.DeviceBehavior.{ Message, PropagateStatus, UpdateStatus, Subscribe, Unsubscribe }
+import it.pps.ddos.device.DeviceBehavior.Tick
+
 import scala.concurrent.duration.FiniteDuration
 
 /*
 * Actor of a basic sensor and timed sensor
 * */
 object SensorActor:
-  private case object SensorTimerKey
+  def apply[A, B](sensor: Sensor[A, B]): SensorActor[A, B] = new SensorActor(sensor)
 
-  /**
-   * declaration of the the private message for the timed actor
-   */
-  private case object Tick extends Message
+class SensorActor[A, B](val sensor: Sensor[A, B]):
+  private case object TimedSensorKey
 
-  def getBasicBehavior[A, B](sensor: Sensor[A, B], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = {
-    case PropagateStatus(requesterRef) =>
-      sensor.propagate(ctx.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
-      Behaviors.same
+  private def getBasicSensorBehavior(ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = 
     case UpdateStatus(value: B) =>
       sensor.update(ctx.self, value)
       Behaviors.same
-    case Subscribe(replyTo) =>
-      sensor.subscribe(ctx.self, replyTo)
-      Behaviors.same
-    case Unsubscribe(replyTo) =>
-      sensor.unsubscribe(ctx.self, replyTo)
-      Behaviors.same
-  }
-
-  private def getTimedBehavior[A, B](sensor: Sensor[A, B], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = {
-    case Tick =>
-      sensor.propagate(ctx.self, ctx.self)
-      Behaviors.same
-  }
-
-  def withTimer[A, B](sensor: Sensor[A, B], duration: FiniteDuration): Behavior[Message] =
+  
+  def behaviorWithTimer(duration: FiniteDuration): Behavior[Message] =
     Behaviors.setup { context =>
       Behaviors.withTimers { timer =>
-        timer.startTimerAtFixedRate(SensorTimerKey, Tick, duration)
-        Behaviors.receiveMessagePartial(getBasicBehavior(sensor, context).orElse(getTimedBehavior(sensor, context)))
-        Behaviors.receiveMessagePartial(getBasicBehavior(sensor, context).orElse(getTimedBehavior(sensor,context)))
+        timer.startTimerAtFixedRate(TimedSensorKey, Tick, duration)
+        Behaviors.receiveMessagePartial(getBasicSensorBehavior(context)
+          .orElse(DeviceBehavior.getBasicBehavior(sensor, context))
+          .orElse(DeviceBehavior.getTimedBehavior(sensor, context)))
       }
     }
 
-  def apply[A, B](sensor: Sensor[A, B]): Behavior[Message] = Behaviors.setup {
-    context => Behaviors.receiveMessagePartial(getBasicBehavior(sensor, context))
+  def behavior(): Behavior[Message] = Behaviors.setup { context =>
+    Behaviors.receiveMessagePartial(getBasicSensorBehavior(context).orElse(DeviceBehavior.getBasicBehavior(sensor, context)))
   }
