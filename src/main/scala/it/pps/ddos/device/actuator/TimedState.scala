@@ -2,7 +2,7 @@ package it.pps.ddos.device.actuator
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{Behaviors, TimerScheduler}
-import it.pps.ddos.device.sensor.SensorProtocol._
+import it.pps.ddos.device.DeviceProtocol._
 
 import scala.concurrent.duration.FiniteDuration
 

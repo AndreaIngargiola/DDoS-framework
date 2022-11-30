@@ -4,11 +4,11 @@ import akka.actor.typed.ActorRef
 import akka.actor.typed.scaladsl.TimerScheduler
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.sensor.Sensor
-import it.pps.ddos.device.sensor.SensorProtocol.*
+import it.pps.ddos.device.DeviceProtocol.*
 
 import scala.concurrent.duration.FiniteDuration
 
-trait Condition[A, B](condition: A|B=>Boolean, replyTo: ActorRef[Message]):
+trait Condition[A, B](condition: (A | B) => Boolean, replyTo: ActorRef[Message]):
   self: Sensor[A, B] =>
   override def update(selfId: ActorRef[Message], phyInput: B): Unit =
     self.status = Option(preProcess(phyInput))

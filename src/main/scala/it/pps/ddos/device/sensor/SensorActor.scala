@@ -4,7 +4,7 @@ import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 
 import it.pps.ddos.device.sensor.Sensor
-import it.pps.ddos.device.sensor.SensorProtocol.{ Message, PropagateStatus, UpdateStatus, Subscribe, Unsubscribe }
+import it.pps.ddos.device.DeviceProtocol.{ Message, PropagateStatus, UpdateStatus, Subscribe, Unsubscribe }
 import it.pps.ddos.device.DeviceBehavior.Tick
 import it.pps.ddos.device.DeviceBehavior
 
@@ -19,12 +19,11 @@ object SensorActor:
 class SensorActor[A, B](val sensor: Sensor[A, B]):
   private case object TimedSensorKey
 
-  private def getBasicSensorBehavior(ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = {
+  private def getBasicSensorBehavior(ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = 
     case UpdateStatus(value: B) =>
       sensor.update(ctx.self, value)
       Behaviors.same
-  }
-
+  
   def behaviorWithTimer(duration: FiniteDuration): Behavior[Message] =
     Behaviors.setup { context =>
       Behaviors.withTimers { timer =>

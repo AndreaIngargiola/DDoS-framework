@@ -9,7 +9,7 @@ import scala.annotation.targetName
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
 import scala.language.postfixOps
-import it.pps.ddos.device.sensor.SensorProtocol.*
+import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceBehavior
 
@@ -24,7 +24,7 @@ class Actuator[T](val FSM: FSM[T], destinations: ActorRef[Message]*) extends Dev
     private var utilityActor: ActorRef[Message] = null
     println(s"Initial state ${FSM.getInitialState.name}")
 
-    private def getBehavior(): Behavior[Message] = Behaviors.setup[Message] { context =>
+    def getBehavior(): Behavior[Message] = Behaviors.setup[Message] { context =>
       utilityActor = spawnUtilityActor(context)
       if (currentState.isInstanceOf[LateInit]) utilityActor ! SetActuatorRef(context.self)
       Behaviors.receiveMessagePartial(basicActuatorBehavior(context).orElse(DeviceBehavior.getBasicBehavior(this, context)))

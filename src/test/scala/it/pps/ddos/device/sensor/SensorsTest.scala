@@ -3,7 +3,7 @@ package it.pps.ddos.device.sensor
 import akka.actor.testkit.typed.scaladsl.{ActorTestKit, TestProbe}
 import akka.actor.typed.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
-import it.pps.ddos.device.sensor.SensorProtocol.{Message, PropagateStatus, Status, UpdateStatus}
+import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, UpdateStatus}
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
 import org.scalatest.flatspec.AnyFlatSpec
 

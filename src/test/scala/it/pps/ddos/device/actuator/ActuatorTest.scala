@@ -52,7 +52,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testBasicStateCorrectTransition(): Unit =
         val fsm = createTestBasicStateFSM()
-        val actuator: Behavior[Message[String]] = Actuator[String](fsm)
+        val actuator: Behavior[Message[String]] = Actuator[String](fsm).getBehavior()
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message[String]]()
         actuatorActor ! MessageWithoutReply("toB")

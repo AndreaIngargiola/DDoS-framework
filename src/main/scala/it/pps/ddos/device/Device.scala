@@ -1,7 +1,7 @@
 package it.pps.ddos.device
 
 import akka.actor.typed.ActorRef
-import it.pps.ddos.device.sensor.SensorProtocol.{Message, Status}
+import DeviceProtocol.{Message, Status}
 
 import scala.collection.immutable.List
 

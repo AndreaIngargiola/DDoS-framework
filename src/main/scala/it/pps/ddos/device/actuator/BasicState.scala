@@ -4,7 +4,7 @@ import scala.annotation.targetName
 import scala.collection.immutable.{HashMap, ListMap}
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
-import it.pps.ddos.device.sensor.SensorProtocol._
+import it.pps.ddos.device.DeviceProtocol._
 
 object BasicState:
     def apply[T](name: String): BasicState[T] = new BasicState(name)
