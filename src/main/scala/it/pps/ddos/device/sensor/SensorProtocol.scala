@@ -1,6 +1,7 @@
 package it.pps.ddos.device.sensor
 
 import akka.actor.typed.ActorRef
+import scala.collection.immutable.List
 
 /* Definition of the message protocol shared by the sensors */
 object SensorProtocol:
@@ -9,6 +10,8 @@ object SensorProtocol:
   case class PropagateStatus(requester: ActorRef[Message]) extends Message
 
   case class Status[T](author: ActorRef[Message], value: T) extends Message
+
+  case class Statuses[T](author: ActorRef[Message], values: List[T]) extends Message
 
   case class UpdateStatus[T](value: T) extends Message
 
@@ -19,3 +22,5 @@ object SensorProtocol:
   case class Unsubscribe(replyTo: ActorRef[Message]) extends Message
 
   case class UnsubscribeAck(author: ActorRef[Message]) extends Message
+
+  case class Timeout() extends Message
