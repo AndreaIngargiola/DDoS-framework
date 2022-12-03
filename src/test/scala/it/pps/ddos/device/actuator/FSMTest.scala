@@ -3,6 +3,7 @@ package it.pps.ddos.device.actuator
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import org.scalatest.flatspec.AnyFlatSpec
+import it.pps.ddos.device.DeviceProtocol._
 
 import scala.collection.immutable.ListMap
 
@@ -15,7 +16,7 @@ class FSMTest extends AnyFlatSpec:
 
   private class FSMState(name: String) extends State[String](name):
     override def copy(): FSMState = new FSMState(name)
-    override def getBehavior: Behavior[Message[String]] = Behaviors.empty
+    override def getBehavior: Behavior[Message] = Behaviors.empty
 
   private def testDSLPartialCreation(): Unit =
     val A: FSMState = new FSMState("A")
