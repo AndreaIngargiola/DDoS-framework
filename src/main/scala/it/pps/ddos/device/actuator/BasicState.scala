@@ -12,7 +12,7 @@ object BasicState:
 class BasicState[T](name: String) extends State[T](name):
     private val behavior: Behavior[Message] = Behaviors.receiveMessage[Message] { msg =>
         msg match
-            case MessageWithReply(msg, replyTo) =>
+            case MessageWithReply(msg: T, replyTo, args: _*) =>
                 replyTo ! Approved()
                 Behaviors.same
             case Stop() => Behaviors.stopped

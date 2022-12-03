@@ -13,6 +13,8 @@ import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceBehavior
 
+import scala.collection.immutable.ArraySeq
+
 object Actuator:
     def apply[T](fsm: FSM[T]): Actuator[T] = new Actuator[T](fsm)
 
@@ -24,30 +26,42 @@ class Actuator[T](val FSM: FSM[T], destinations: ActorRef[Message]*) extends Dev
     private var utilityActor: ActorRef[Message] = null
     println(s"Initial state ${FSM.getInitialState.name}")
 
-    def getBehavior(): Behavior[Message] = Behaviors.setup[Message] { context =>
+    def getBehavior: Behavior[Message] = Behaviors.setup[Message] { context =>
       utilityActor = spawnUtilityActor(context)
       if (currentState.isInstanceOf[LateInit]) utilityActor ! SetActuatorRef(context.self)
       Behaviors.receiveMessagePartial(basicActuatorBehavior(context).orElse(DeviceBehavior.getBasicBehavior(this, context)))
     }
 
-    private def basicActuatorBehavior(context: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] =
-      case MessageWithoutReply(msg: T, args: Seq[T]) =>
-        messageWithoutReply(msg, context, args)
-        Behaviors.same
-      case Approved() =>
-        utilityActor = approved(context)
-        Behaviors.same
-      case Denied() =>
-        denied()
-        Behaviors.same
-      case ForceStateChange(transition: T) =>
-        utilityActor = forceStateChange(context, transition)
-        Behaviors.same
+    private def basicActuatorBehavior(context: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = { message =>
+        println(message)
+        message match
+            case MessageWithoutReply(msg: T, args: _*) =>
+                messageWithoutReply(msg, context, args.asInstanceOf[Seq[T]])
+                Behaviors.same
+            case Approved() =>
+                utilityActor = approved(context)
+                Behaviors.same
+            case Denied() =>
+                denied()
+                Behaviors.same
+            case ForceStateChange(transition: T) =>
+                println(s"Force state change to ${transition}")
+                utilityActor = forceStateChange(context, transition)
+                Behaviors.same
+            case Subscribe(requester: ActorRef[Message]) =>
+                subscribe(context.self, requester)
+                requester ! SubscribeAck(context.self)
+                Behaviors.same
+            case PropagateStatus(requester: ActorRef[Message]) =>
+                propagate(context.self, requester)
+                Behaviors.same
+    }
 
     private def approved(context: ActorContext[Message]): ActorRef[Message] =
         if (pendingState.isDefined)
             currentState = pendingState.get
             this.status = Some(currentState.name)
+            println("propagation")
             propagate(context.self, context.self)
             pendingState = None
             utilityActor ! Stop()
@@ -60,10 +74,10 @@ class Actuator[T](val FSM: FSM[T], destinations: ActorRef[Message]*) extends Dev
         pendingState = None
 
     private def messageWithoutReply(msg: T, context: ActorContext[Message], args: Seq[T]): Behavior[Message] =
+        println(FSM.map.contains((currentState, msg)) && !currentState.isInstanceOf[LateInit])
         if (FSM.map.contains((currentState, msg)) && !currentState.isInstanceOf[LateInit])
             FSM.map((currentState, msg)) match
                 case state =>
-                    println(s"Transition from ${currentState.name} to ${state.name}")
                     pendingState = Some(state)
                     utilityActor ! MessageWithReply(msg, context.self, args*)
                 case null =>
@@ -72,6 +86,7 @@ class Actuator[T](val FSM: FSM[T], destinations: ActorRef[Message]*) extends Dev
 
     private def forceStateChange(context: ActorContext[Message], transition: T): ActorRef[Message] =
         currentState = FSM.map((currentState, transition))
+        this.status = Some(currentState.name)
         utilityActor ! Stop()
         propagate(context.self, context.self)
         spawnUtilityActor(context)
