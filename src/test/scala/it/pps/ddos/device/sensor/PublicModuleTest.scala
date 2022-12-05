@@ -3,7 +3,7 @@ package it.pps.ddos.device.sensor
 import akka.actor.testkit.typed.Effect.Spawned
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorRef
-import it.pps.ddos.device.sensor.SensorProtocol.*
+import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.sensor.{BasicSensor, Public, Sensor, SensorActor}
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -20,7 +20,7 @@ class PublicModuleTest extends AnyFlatSpec:
 
   private def preparePublicSensor(): ActorRef[Message] =
     class PublicSensor extends BasicSensor[String](List.empty) with Public[String]
-    val sensor = testKit.spawn(SensorActor(new PublicSensor))
+    val sensor = testKit.spawn(SensorActor(new PublicSensor).behavior())
     sensor ! UpdateStatus("BroadcastTest")
     sensor
 
