@@ -27,7 +27,7 @@ trait Public[A]:
     case true =>
 
   override def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit =
-    destinations = destinations.filter(_ != toRemove);
+    destinations = destinations.filter(_ != toRemove)
     toRemove ! UnsubscribeAck(selfId)
 
 trait Timer(val duration: FiniteDuration):

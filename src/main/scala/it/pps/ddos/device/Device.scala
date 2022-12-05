@@ -8,7 +8,6 @@ import scala.collection.immutable.List
 trait Device[T](protected var destinations: List[ActorRef[Message]]){
   protected var status: Option[T] = None
   def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
-    println(destinations)
     if requester == selfId then status match
       case Some(value) => for (actor <- destinations) actor ! Status[T](selfId, value)
       case None =>
