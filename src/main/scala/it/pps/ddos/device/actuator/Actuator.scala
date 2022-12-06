@@ -16,10 +16,10 @@ import it.pps.ddos.device.DeviceBehavior
 import scala.collection.immutable.ArraySeq
 
 object Actuator:
-    def apply[T](fsm: FSM[T]): Actuator[T] = new Actuator[T](fsm)
+    def apply[T](id: String, fsm: FSM[T]): Actuator[T] = new Actuator[T](id, fsm)
 
 
-class Actuator[T](val FSM: FSM[T], destinations: ActorRef[Message]*) extends Device[String](destinations.toList):
+class Actuator[T](val id: String, val FSM: FSM[T], destinations: ActorRef[Message]*) extends Device[String](destinations.toList):
     private var currentState: State[T] = FSM.getInitialState
     this.status = Some(currentState.name)
     private var pendingState: Option[State[T]] = None

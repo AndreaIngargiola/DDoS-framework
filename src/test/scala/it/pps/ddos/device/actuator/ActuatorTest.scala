@@ -53,7 +53,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testBasicStateCorrectTransition(): Unit =
         val fsm = createTestBasicStateFSM()
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
@@ -66,7 +66,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testBasicStateWrongTransition(): Unit =
         val fsm = createTestBasicStateFSM()
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
@@ -81,7 +81,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testConditionalStateCorrectTransition(): Unit =
         val fsm = createTestConditionalStateFSM((s: String, args: Seq[String]) => args.size == 2)
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
@@ -94,7 +94,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testConditionalStateWrongTransition(): Unit =
         val fsm = createTestConditionalStateFSM((s: String, args: Seq[String]) => args.size == 2)
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
@@ -109,7 +109,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testConditionalStateWrongCondition(): Unit =
         val fsm = createTestConditionalStateFSM((s: String, args: Seq[String]) => args.size == 2)
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
@@ -124,7 +124,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testTimedStateCorrectTransition(): Unit =
         val fsm = createTestTimedStateFSM()
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
@@ -139,7 +139,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testTimedStateWrongTransition(): Unit =
         val fsm = createTestTimedStateFSM()
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
@@ -156,7 +156,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testTimedStateMessageWithoutReply(): Unit =
         val fsm = createTestTimedStateFSM()
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
@@ -175,7 +175,7 @@ class ActuatorTest extends AnyFlatSpec:
 
     private def testTimedStateForceStateChange(): Unit =
         val fsm = createTestTimedStateFSM()
-        val actuator: Behavior[Message] = Actuator[String](fsm).getBehavior
+        val actuator: Behavior[Message] = Actuator[String]("actuatorTest", fsm).getBehavior
         val actuatorActor = testKit.spawn(actuator)
         val testProbe = testKit.createTestProbe[Message]()
         actuatorActor ! Subscribe(testProbe.ref)
