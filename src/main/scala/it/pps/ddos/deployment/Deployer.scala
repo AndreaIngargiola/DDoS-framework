@@ -36,11 +36,9 @@ object Deployer:
 
   private def deploy(devices: Actuator[Message]*): Unit =
     devices.foreach(dev =>
-      orderedActorSystemRefList.foreach(actorRefWithInt =>
-        if actorRefWithInt.actorRef == getMinSpawnActorNode then
-          actorRefWithInt.actorRef ! InternSpawn(dev.getBehavior)
-          actorRefWithInt.numberOfActorSpawned + 1
-      )
+      val actorRefWithInt = orderedActorSystemRefList.filter(_.actorRef == getMinSpawnActorNode).head
+      actorRefWithInt.actorRef ! InternSpawn(dev.getBehavior)
+      actorRefWithInt.numberOfActorSpawned + 1
     )
 
   private def setupClusterConfig(port: String): Config =
