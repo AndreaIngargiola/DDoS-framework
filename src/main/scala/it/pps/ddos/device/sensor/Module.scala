@@ -10,8 +10,8 @@ import scala.concurrent.duration.FiniteDuration
 
 trait Condition[A, B](condition: (A | B) => Boolean, replyTo: ActorRef[Message]):
   self: Sensor[A, B] =>
-  override def update(selfId: ActorRef[Message], phyInput: B): Unit =
-    self.status = Option(preProcess(phyInput))
+  override def update(selfId: ActorRef[Message], physicalInput: B): Unit =
+    self.status = Option(preProcess(physicalInput))
     condition(self.status.get) match
       case true => replyTo ! Status[A](selfId, self.status.get)
       case _ =>
@@ -22,12 +22,12 @@ trait Public[A]:
     case Some(value) => for (actor <- destinations) actor ! Status[A](selfId, value)
     case None =>
 
-  override def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = destinations.contains(toAdd) match
+  override def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = destinations contains toAdd match
     case false => destinations = toAdd :: destinations; toAdd ! SubscribeAck(selfId)
-    case _ =>
+    case true =>
 
   override def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit =
-    destinations = destinations.filter(_ != toRemove);
+    destinations = destinations.filter(_ != toRemove)
     toRemove ! UnsubscribeAck(selfId)
 
 trait Timer(val duration: FiniteDuration):

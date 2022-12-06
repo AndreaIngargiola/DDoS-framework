@@ -2,8 +2,8 @@ package it.pps.ddos.device
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import it.pps.ddos.device.sensor.Sensor
-import DeviceProtocol.*
+import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Subscribe, Unsubscribe}
+import it.pps.ddos.device.Device
 
 object DeviceBehavior:
   /**
