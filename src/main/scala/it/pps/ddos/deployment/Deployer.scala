@@ -1,11 +1,11 @@
 package it.pps.ddos.deployment
 
-import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
+import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.config.{Config, ConfigFactory}
-import akka.actor.typed.scaladsl.*
-import akka.cluster.typed.*
 import it.pps.ddos.device.DeviceProtocol.Message
 import it.pps.ddos.device.actuator.Actuator
+import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
+import akka.cluster.typed.{Cluster, Join}
 
 import scala.collection.mutable
 
@@ -38,7 +38,7 @@ object Deployer:
     devices.foreach(dev =>
       orderedActorSystemRefList.foreach(actorRefWithInt =>
         if actorRefWithInt.actorRef == getMinSpawnActorNode then
-          actorRefWithInt.actorRef ! InternSpawn(dev.getBehavior())
+          actorRefWithInt.actorRef ! InternSpawn(dev.getBehavior)
           actorRefWithInt.numberOfActorSpawned + 1
       )
     )
