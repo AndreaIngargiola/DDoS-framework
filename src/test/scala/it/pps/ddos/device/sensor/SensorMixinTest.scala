@@ -11,7 +11,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import java.io.File
 import scala.concurrent.duration.FiniteDuration
 
-class SensorsMixinTest extends AnyFlatSpec:
+class SensorMixinTest extends AnyFlatSpec:
   /*
   * Sensor testing with a basic mixin
   * */

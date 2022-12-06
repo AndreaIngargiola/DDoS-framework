@@ -11,7 +11,7 @@ import org.scalatest.flatspec.AnyFlatSpec
 import java.io.File
 import scala.concurrent.duration.FiniteDuration
 
-class SensorsTest extends AnyFlatSpec:
+class SensorTest extends AnyFlatSpec:
 
   /*
   * SensorActor and timed SensorActor Tests
