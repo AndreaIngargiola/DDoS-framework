@@ -3,7 +3,7 @@ package it.pps.ddos.device.sensor
 import akka.actor.testkit.typed.scaladsl.{ActorTestKit, TestProbe}
 import akka.actor.typed.{ActorRef, ActorSystem}
 import com.typesafe.config.ConfigFactory
-import it.pps.ddos.device.sensor.SensorProtocol.{Message, PropagateStatus, Status, UpdateStatus}
+import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, UpdateStatus}
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
 import org.scalatest.flatspec.AnyFlatSpec
 
@@ -35,12 +35,12 @@ class SensorsTest extends AnyFlatSpec :
   val testKit = ActorTestKit()
 
   private def sendMsg(sensorActor: ActorRef[Message], testProbe: TestProbe[Message]): Unit =
-    sensorActor ! PropagateStatus(testProbe.ref)
+    sensorActor ! PropagateStatus(sensorActor.ref)
     Thread.sleep(800)
 
   ///BASIC SENSOR TESTS
   val testProbeBasic: TestProbe[Message] = testKit.createTestProbe[Message]()
-  val sensorBasic = new BasicSensor[String](List(testProbeBasic.ref)) with Public[String]
+  val sensorBasic = new BasicSensor[String](List(testProbeBasic.ref)) //with Public[String]
   val sensorBasicActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorBasic))
 
   private def testPublicBasicSensorSendCorrect(): Unit =
