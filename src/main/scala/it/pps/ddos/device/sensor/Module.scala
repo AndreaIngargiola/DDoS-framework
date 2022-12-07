@@ -18,13 +18,18 @@ trait Condition[A, B](condition: (A | B) => Boolean, replyTo: ActorRef[Message])
 
 trait Public[A]:
   self: Device[A] =>
-  override def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit = status match
-    case Some(value) => for (actor <- destinations) actor ! Status[A](selfId, value)
-    case None =>
+  override def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
+    status match
+      case Some(value) =>
+        for (actor <- destinations)
+          actor ! Status[A](selfId, value)
+          println(actor)
+      case None =>
 
-  override def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = destinations contains toAdd match
-    case false => destinations = toAdd :: destinations; toAdd ! SubscribeAck(selfId)
-    case true =>
+  override def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit =
+    if (!(destinations contains toAdd))
+      destinations = toAdd :: destinations;
+      toAdd ! SubscribeAck(selfId)
 
   override def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit =
     destinations = destinations.filter(_ != toRemove)

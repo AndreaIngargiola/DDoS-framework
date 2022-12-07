@@ -50,7 +50,6 @@ class Actuator[T](val id: String, val FSM: FSM[T], destinations: ActorRef[Messag
                 Behaviors.same
             case Subscribe(requester: ActorRef[Message]) =>
                 subscribe(context.self, requester)
-                requester ! SubscribeAck(context.self)
                 Behaviors.same
             case PropagateStatus(requester: ActorRef[Message]) =>
                 propagate(context.self, requester)
