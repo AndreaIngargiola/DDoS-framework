@@ -1,5 +1,6 @@
 package it.pps.ddos.deployment
 
+import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.config.{Config, ConfigFactory}
 import it.pps.ddos.device.DeviceProtocol.{Message, Subscribe}
@@ -7,6 +8,7 @@ import it.pps.ddos.device.actuator.Actuator
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.cluster.typed.{Cluster, Join}
 import it.pps.ddos.deployment.graph.Graph
+import it.pps.ddos.device.Device
 
 import scala.collection.{immutable, mutable}
 
@@ -20,6 +22,8 @@ object Deployer:
   private var cluster: Option[Cluster] = None
 
   private var devicesActorRefMap = Map.empty[String, ActorRef[Message]]
+
+  private val deviceServiceKey = ServiceKey[Message]("DeviceService")
 
 
   def init(numberOfNode: Int): Unit =
@@ -46,7 +50,9 @@ object Deployer:
         Behaviors.receiveMessage { msg =>
           msg match
             case InternSpawn(id, behavior) =>
-              devicesActorRefMap = Map((id, context.spawn(behavior, "Actuator"))) ++ devicesActorRefMap
+              val ar = context.spawn(behavior, "Actuator")
+              devicesActorRefMap = Map((id, ar)) ++ devicesActorRefMap
+              context.system.receptionist ! Receptionist.Register(deviceServiceKey, ar)
               Behaviors.same
         }
     ), id)
