@@ -27,7 +27,7 @@ class Actuator[T](val id: String, val FSM: FSM[T], destinations: ActorRef[Messag
     private var utilityActor: ActorRef[Message] = null
     println(s"Initial state ${FSM.getInitialState.name}")
 
-    def behavior(): Behavior[Message] = Behaviors.setup[Message] { context =>
+    override def behavior(): Behavior[Message] = Behaviors.setup[Message] { context =>
       utilityActor = spawnUtilityActor(context)
       if (currentState.isInstanceOf[LateInit]) utilityActor ! SetActuatorRef(context.self)
       Behaviors.receiveMessagePartial(basicActuatorBehavior(context).orElse(DeviceBehavior.getBasicBehavior(this, context)))

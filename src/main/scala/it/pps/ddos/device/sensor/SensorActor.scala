@@ -19,11 +19,11 @@ object SensorActor:
 class SensorActor[A, B](val sensor: Sensor[A, B]):
   private case object TimedSensorKey
 
-  private def getBasicSensorBehavior(ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = 
+  private def getBasicSensorBehavior(ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] =
     case UpdateStatus[B](value) =>
       sensor.update(ctx.self, value)
       Behaviors.same
-  
+
   def behaviorWithTimer(duration: FiniteDuration): Behavior[Message] =
     Behaviors.setup { context =>
       Behaviors.withTimers { timer =>
