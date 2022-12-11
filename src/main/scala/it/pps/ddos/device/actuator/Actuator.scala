@@ -7,11 +7,12 @@ import akka.actor.typed.scaladsl.AskPattern.schedulerFromActorSystem
 
 import scala.annotation.targetName
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.language.postfixOps
 import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceBehavior
+import it.pps.ddos.device.DeviceBehavior.Tick
 
 import scala.collection.immutable.ArraySeq
 
@@ -26,11 +27,21 @@ class Actuator[T](val id: String, val FSM: FSM[T], destinations: ActorRef[Messag
     private var utilityActor: ActorRef[Message] = null
     println(s"Initial state ${FSM.getInitialState.name}")
 
-    def getBehavior: Behavior[Message] = Behaviors.setup[Message] { context =>
+    def behavior(): Behavior[Message] = Behaviors.setup[Message] { context =>
       utilityActor = spawnUtilityActor(context)
       if (currentState.isInstanceOf[LateInit]) utilityActor ! SetActuatorRef(context.self)
       Behaviors.receiveMessagePartial(basicActuatorBehavior(context).orElse(DeviceBehavior.getBasicBehavior(this, context)))
     }
+
+    def behaviorWithTimer(duration: FiniteDuration): Behavior[Message] =
+        Behaviors.setup { context =>
+          Behaviors.withTimers { timer =>
+            timer.startTimerAtFixedRate(null, Tick, duration)
+            Behaviors.receiveMessagePartial(basicActuatorBehavior(context)
+            .orElse(DeviceBehavior.getBasicBehavior(this, context))
+            .orElse(DeviceBehavior.getTimedBehavior(this, context)))
+          }
+        }
 
     private def basicActuatorBehavior(context: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = { message =>
         println(message)

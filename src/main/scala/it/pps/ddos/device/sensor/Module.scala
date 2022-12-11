@@ -1,10 +1,11 @@
 package it.pps.ddos.device.sensor
 
-import akka.actor.typed.ActorRef
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.TimerScheduler
-import it.pps.ddos.device.Device
+import it.pps.ddos.device.{Device, sensor}
 import it.pps.ddos.device.sensor.Sensor
 import it.pps.ddos.device.DeviceProtocol.*
+import it.pps.ddos.device.actuator.Actuator
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -37,7 +38,9 @@ trait Public[A]:
 
 trait Timer(val duration: FiniteDuration):
   self: Device[_] =>
-
+  override def behavior(): Behavior[Message] =
+    if (this.isInstanceOf[Sensor[_, _]]) SensorActor(this.asInstanceOf[Sensor[_, _]]).behaviorWithTimer(duration)
+    else this.asInstanceOf[Actuator[_]].behaviorWithTimer(duration) // TODO: modificare
 
 
 

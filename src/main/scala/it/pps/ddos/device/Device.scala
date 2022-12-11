@@ -1,11 +1,13 @@
 package it.pps.ddos.device
 
 import akka.actor.typed.ActorRef
+import akka.actor.typed.Behavior
 import it.pps.ddos.device.DeviceProtocol.{Message, Status}
 
 import scala.collection.immutable.List
+import scala.concurrent.duration.FiniteDuration
 
-trait Device[T](protected var destinations: List[ActorRef[Message]]){
+trait Device[T](protected var destinations: List[ActorRef[Message]]):
   protected var status: Option[T] = None
   def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
     if requester == selfId then status match
@@ -15,4 +17,4 @@ trait Device[T](protected var destinations: List[ActorRef[Message]]){
   def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = ()
 
   def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit = ()
-}
+  def behavior(): Behavior[Message]

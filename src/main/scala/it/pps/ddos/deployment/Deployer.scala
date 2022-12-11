@@ -54,7 +54,7 @@ object Deployer:
   private def deploy[T](devices: Actuator[T]*): Unit =
     devices.foreach(dev =>
       val actorRefWithInt = orderedActorSystemRefList.filter(_.actorSystem.ref == getMinSpawnActorNode).head
-      actorRefWithInt.actorSystem.ref ! InternSpawn(dev.id, dev.getBehavior)
+      actorRefWithInt.actorSystem.ref ! InternSpawn(dev.id, dev.behavior())
       actorRefWithInt.numberOfActorSpawned + 1
     )
 
