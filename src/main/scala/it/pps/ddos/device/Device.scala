@@ -7,7 +7,7 @@ import it.pps.ddos.device.DeviceProtocol.{Message, Status}
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration
 
-trait Device[T](protected var destinations: List[ActorRef[Message]]):
+trait Device[T](val id: String, protected var destinations: List[ActorRef[Message]]):
   protected var status: Option[T] = None
   def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
     if requester == selfId then status match
