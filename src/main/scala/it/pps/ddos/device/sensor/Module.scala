@@ -21,10 +21,7 @@ trait Public[A]:
   self: Device[A] =>
   override def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
     status match
-      case Some(value) =>
-        for (actor <- destinations)
-          actor ! Status[A](selfId, value)
-          println(actor)
+      case Some(value) => for (actor <- destinations) actor ! Status[A](selfId, value)
       case None =>
 
   override def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit =

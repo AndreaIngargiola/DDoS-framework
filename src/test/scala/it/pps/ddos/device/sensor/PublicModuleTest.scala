@@ -64,4 +64,3 @@ class PublicModuleTest extends AnyFlatSpec:
       case n => probeList(n).expectMessage(Status(sensor, "BroadcastTest"))
     }
 
-

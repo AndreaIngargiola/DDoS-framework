@@ -13,7 +13,7 @@ import scala.concurrent.duration.FiniteDuration
 /*
 * Actor of a basic sensor and timed sensor
 * */
-private object SensorActor:
+object SensorActor:
   def apply[A, B](sensor: Sensor[A, B]): SensorActor[A, B] = new SensorActor(sensor)
 
 private class SensorActor[A, B](val sensor: Sensor[A, B]):
