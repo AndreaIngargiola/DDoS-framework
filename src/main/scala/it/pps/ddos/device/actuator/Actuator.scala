@@ -13,12 +13,13 @@ import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceBehavior
 import it.pps.ddos.device.DeviceBehavior.Tick
+import it.pps.ddos.device.actuator.Actuator.TimedActuatorKey
 
 import scala.collection.immutable.ArraySeq
 
 object Actuator:
+    private case object TimedActuatorKey
     def apply[T](id: String, fsm: FSM[T]): Actuator[T] = new Actuator[T](id, fsm)
-
 
 class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[Message]*) extends Device[String](id, destinations.toList):
     private var currentState: State[T] = FSM.getInitialState
@@ -36,7 +37,7 @@ class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[Message]*)
     def behaviorWithTimer(duration: FiniteDuration): Behavior[Message] =
         Behaviors.setup { context =>
           Behaviors.withTimers { timer =>
-            timer.startTimerAtFixedRate(null, Tick, duration)
+            timer.startTimerAtFixedRate(TimedActuatorKey, Tick, duration)
             Behaviors.receiveMessagePartial(basicActuatorBehavior(context)
             .orElse(DeviceBehavior.getBasicBehavior(this, context))
             .orElse(DeviceBehavior.getTimedBehavior(this, context)))

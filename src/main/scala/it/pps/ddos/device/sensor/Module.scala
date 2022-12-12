@@ -35,9 +35,3 @@ trait Public[A]:
   override def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit =
     destinations = destinations.filter(_ != toRemove)
     toRemove ! UnsubscribeAck(selfId)
-
-trait Timer(val duration: FiniteDuration):
-  self: Device[_] =>
-  override def behavior(): Behavior[Message] =
-    if (this.isInstanceOf[Sensor[_, _]]) SensorActor(this.asInstanceOf[Sensor[_, _]]).behaviorWithTimer(duration)
-    else this.asInstanceOf[Actuator[_]].behaviorWithTimer(duration)
