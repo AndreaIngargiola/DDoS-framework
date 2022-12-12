@@ -16,7 +16,7 @@ abstract class Group[I,O](val sources: List[ActorRef[Message]], destinations: Li
 private trait MultipleOutputs[O]:
   self: Device[List[O]] =>
   override def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit = status match
-    case Some(value) => println("sending status to "+destinations(0).toString); for (actor <- destinations) actor ! Statuses[O](selfId, value)
+    case Some(value) => for (actor <- destinations) actor ! Statuses[O](selfId, value)
     case None =>
 
 class MapGroup[I,O](sources: List[ActorRef[Message]],
