@@ -27,5 +27,16 @@ object TriggerModes:
         context.self ! PropagateStatus(context.self)
         active(group.sources, group, context)
 
-
+  object NonBlockingGroup extends GroupActor:
+    override def getTriggerBehavior[I,O](context: ActorContext[Message],
+                                       group: Group[I,O],
+                                       sources: List[ActorRef[Message]]): PartialFunction[Message, Behavior[Message]] =
+      case Status[I](author, value) =>
+        context.self ! Statuses(author, List(value))
+        Behaviors.same
+      case Statuses[I](author, value) if group.sources.contains(author) =>
+        group.insert(author, value)
+        group.compute(context.self);
+        context.self ! PropagateStatus(context.self)
+        Behaviors.same
 
