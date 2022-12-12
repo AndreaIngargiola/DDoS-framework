@@ -43,13 +43,15 @@ class TusowAkkaLogicHandler extends TusowService {
         handleFutureRequest(space)(() => Future.successful(IOResponse(response = false, message = "Tuple space not found")))(() => space.write(in.tuple.get.value).toScala.map(f => IOResponse(response = true, message = f.toString)))
     }
 
+    private def handleReadOrTakeRequest[A](in: ReadOrTakeRequest)(readOrTake: (LogicSpace, String, Long) => Future[A]): Future[A] = {
+        val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
+        handleFutureRequest(space)(() => Future.failed(new IllegalArgumentException("Tuple space not found")))(() => readOrTake(space, in.template.textualTemplate.get.regex, timeout))
+    }
+
     override def read(in: ReadOrTakeRequest): Future[Tuple] = {
         val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
-        if (space == null) {
-            Future.successful(null)
-        } else {
-            space.read(in.template.logicTemplate.getOrElse(Template.Logic()).query).toScala.map(logicMatch => Tuple(key = logicMatch.getTemplate.toString, value = logicMatch.getTuple.orElse(LogicTuple.of("")).getValue.toString))
-        }
+        handleReadOrTakeRequest(in)((space, template, timeout) => space.read(in.template.logicTemplate.getOrElse(Template.Logic()).query)
+          .toScala.map(logicMatch => Tuple(key = logicMatch.getTemplate.toString, value = logicMatch.getTuple.orElse(LogicTuple.of("")).getValue.toString)))
     }
 
     override def take(in: ReadOrTakeRequest): Future[Tuple] = {

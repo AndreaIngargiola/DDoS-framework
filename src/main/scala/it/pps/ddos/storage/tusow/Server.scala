@@ -18,7 +18,9 @@ import akka.http.scaladsl.model.HttpResponse
 import akka.pki.pem.DERPrivateKeyLoader
 import akka.pki.pem.PEMDecoder
 import com.typesafe.config.ConfigFactory
+import it.pps.ddos.deployment.Deployer
 import it.pps.ddos.storage.tusow.TusowAkkaService
+import it.pps.ddos.storage.tusow.client.Client
 import it.unibo.coordination.tusow.grpc.TusowServiceHandler
 
 import javax.net.ssl.KeyManagerFactory
@@ -40,7 +42,7 @@ object Server {
 
 
     def main(args: Array[String]): Unit = {
-        // important to enable HTTP/2 in ActorSystem's config
+        Deployer.initSeedNodes()
         val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
           .withFallback(ConfigFactory.defaultApplication())
         val system = ActorSystem[Any](Behaviors.receive((ctx, message) => {
@@ -50,8 +52,11 @@ object Server {
                     Behaviors.same
                 case Stop => Behaviors.stopped
             }
-        }), "AkkaHttpServer", conf)
+        }), "ClusterSystem", conf)
         system.ref ! Start(new TusowAkkaService(system))
+        Thread.sleep(5000)
+        Client.testClient()
+//        Client.testClientTextual()
     }
 }
 
@@ -81,34 +86,4 @@ class Server(system: akka.actor.ActorSystem, tusowAkkaService: TusowAkkaService)
 
         bound
     }
-    //#server
-
-
-    private def serverHttpContext: HttpsConnectionContext = {
-        val privateKey =
-            DERPrivateKeyLoader.load(PEMDecoder.decode(readPrivateKeyPem()))
-        val fact = CertificateFactory.getInstance("X.509")
-        val cer = fact.generateCertificate(
-            classOf[TusowAkkaService].getResourceAsStream("/certs/server1.pem")
-        )
-        val ks = KeyStore.getInstance("PKCS12")
-        ks.load(null)
-        ks.setKeyEntry(
-            "private",
-            privateKey,
-            new Array[Char](0),
-            Array[Certificate](cer)
-        )
-        val keyManagerFactory = KeyManagerFactory.getInstance("SunX509")
-        keyManagerFactory.init(ks, null)
-        val context = SSLContext.getInstance("TLS")
-        context.init(keyManagerFactory.getKeyManagers, null, new SecureRandom)
-        ConnectionContext.https(context)
-    }
-
-    private def readPrivateKeyPem(): String =
-        Source.fromResource("certs/server1.key").mkString
-    //#server
-
 }
-//#server

@@ -4,12 +4,13 @@ import akka.NotUsed
 import akka.stream.scaladsl.Source
 import it.unibo.coordination.linda.core.TupleSpace
 import it.unibo.coordination.linda.text.{RegexTemplate, RegularMatch, StringTuple, TextualSpace}
-import it.unibo.coordination.tusow.grpc._
+import it.unibo.coordination.tusow.grpc.*
+import it.unibo.coordination.tusow.grpc.ReadOrTakeRequest.Template.TextualTemplate
 
 import java.util.concurrent.{CompletableFuture, TimeUnit}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
-import scala.compat.java8.FutureConverters._
+import scala.compat.java8.FutureConverters.*
 
 object TusowAkkaTextualHandler {
     def apply(): TusowAkkaTextualHandler = new TusowAkkaTextualHandler()
@@ -43,11 +44,11 @@ class TusowAkkaTextualHandler extends TusowService {
 
     private def handleReadOrTakeRequest[A](in: ReadOrTakeRequest)(readOrTake: (TextualSpace, String, Long) => Future[A]): Future[A] = {
         val space = textualSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
-        handleFutureRequest(space)(() => Future.failed(new IllegalArgumentException("Tuple space not found")))(() => readOrTake(space, in.template.textualTemplate.getOrElse("").toString, timeout))
+        handleFutureRequest(space)(() => Future.failed(new IllegalArgumentException("Tuple space not found")))(() => readOrTake(space, in.template.textualTemplate.get.regex, timeout))
     }
 
     override def read(in: ReadOrTakeRequest): Future[Tuple] = {
-       handleReadOrTakeRequest(in)((space, template, timeout) => space.read(template).orTimeout(timeout, TimeUnit.SECONDS).toScala.map(t => Tuple(t.getTemplate.toString, t.getTuple.orElse(StringTuple.of("")).getValue)))
+       handleReadOrTakeRequest(in)((space, template, timeout) => space.read(RegexTemplate.of(template)).orTimeout(timeout, TimeUnit.SECONDS).toScala.map(t => Tuple(t.getTemplate.toString, t.getTuple.orElse(StringTuple.of("")).getValue)))
     }
 
     override def take(in: ReadOrTakeRequest): Future[Tuple] = {

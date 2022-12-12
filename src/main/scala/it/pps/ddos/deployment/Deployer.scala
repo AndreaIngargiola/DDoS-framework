@@ -21,23 +21,16 @@ object Deployer:
 
   private var devicesActorRefMap = Map.empty[String, ActorRef[Message]]
 
+  def initSeedNodes(): Unit =
+    ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2551"))
+    ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2552"))
+    
 
-  def init(numberOfNode: Int): Unit =
-    for (i <- 1 to numberOfNode) {
-      val actorSystem = if (cluster.isEmpty)
-        println("Creating first actor system")
-        val as = ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2551"))
-        cluster = Some(Cluster(as))
-        as
-      else
-        val as = createActorSystem("ActorSystem-" + i)
-        println(as.address)
-        //Cluster(system = as).manager ! Join(cluster.get.selfMember.address)
+  def addNodes(numberOfNode: Int): Unit =
+    for (i <- 1 to numberOfNode)
+        val as = createActorSystem("ClusterSystem")
         Thread.sleep(300)
-        as
-      orderedActorSystemRefList += ActorSysWithActor(actorSystem, 0)
-    }
-
+        orderedActorSystemRefList += ActorSysWithActor(as, 0)
 
   private def createActorSystem(id: String): ActorSystem[InternSpawn] =
     println("Creating actor system " + id)
@@ -49,7 +42,7 @@ object Deployer:
               devicesActorRefMap = Map((id, context.spawn(behavior, "Actuator"))) ++ devicesActorRefMap
               Behaviors.same
         }
-    ), id)
+    ), id, setupClusterConfig("0"))
 
   private def deploy[T](devices: Actuator[T]*): Unit =
     devices.foreach(dev =>
@@ -65,11 +58,12 @@ object Deployer:
   private def setupClusterConfig(port: String): Config =
     val hostname = "127.0.0.1"
     ConfigFactory.parseString(String.format("akka.remote.artery.canonical.hostname = \"%s\"%n", hostname)
-      + String.format("akka.remote.artery.canonical.port=" + 0 + "%n")
+      + String.format("akka.remote.artery.canonical.port=" + port + "%n")
       + String.format("akka.management.http.hostname=\"%s\"%n",hostname)
       + String.format("akka.management.http.port=" + port.replace("255", "855") + "%n")
       + String.format("akka.management.http.route-providers-read-only=%s%n", "false")
-      + String.format("akka.remote.artery.advanced.tcp.outbound-client-hostname=%s%n", hostname))
+      + String.format("akka.remote.artery.advanced.tcp.outbound-client-hostname=%s%n", hostname)
+      + String.format("akka.cluster.jmx.multi-mbeans-in-same-jvm = on"))
       .withFallback(ConfigFactory.load("application.conf"))
 
   private def getMinSpawnActorNode: ActorRef[InternSpawn] =
