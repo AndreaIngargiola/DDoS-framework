@@ -19,8 +19,8 @@ class PublicModuleTest extends AnyFlatSpec:
   val testKit: ActorTestKit = ActorTestKit()
 
   private def preparePublicSensor(): ActorRef[Message] =
-    class PublicSensor extends BasicSensor[String](List.empty) with Public[String]
-    val sensor = testKit.spawn(SensorActor(new PublicSensor))
+    class PublicSensor extends BasicSensor[String]("1", List.empty) with Public[String]
+    val sensor = testKit.spawn(SensorActor(new PublicSensor).behavior())
     sensor ! UpdateStatus("BroadcastTest")
     sensor
 

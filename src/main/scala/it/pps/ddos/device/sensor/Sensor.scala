@@ -11,20 +11,15 @@ import scala.concurrent.duration.FiniteDuration
 /*
 * Define logic sensors
 * */
-trait Sensor[A, B](destinations: List[ActorRef[Status[_]]]) extends Device[A]:
+trait Sensor[A, B] extends Device[A]:
   def preProcess: B => A
-
   def update(selfId: ActorRef[Message], physicalInput: B): Unit = this.status = Option(preProcess(physicalInput))
 
-class BasicSensor[A](destinations: ActorRef[Status[_]]*)
-  extends Device[A](destinations.toList) with Sensor[A, A](destinations.toList):
+class BasicSensor[A](id: String, destinations: List[ActorRef[Message]]) extends Device[A](id, destinations) with Sensor[A, A]:
   override def preProcess: A => A = x => x
+  override def behavior(): Behavior[Message] = SensorActor(this).behavior()
 
-class ProcessedDataSensor[A, B](destinations: ActorRef[Status[_]]*)(processFun: B => A)
-  extends Device[A](destinations.toList) with Sensor[A, B](destinations.toList):
+class ProcessedDataSensor[A, B](id: String, destinations: List[ActorRef[Message]], processFun: B => A)
+  extends Device[A](id, destinations) with Sensor[A, B]:
   override def preProcess: B => A = processFun
-
-/*
-* Mixin example
-* */
-// class TemperatureSensor extends Sensor[Double] with BasicSensor[Double]
+  override def behavior(): Behavior[Message] = SensorActor(this).behavior()

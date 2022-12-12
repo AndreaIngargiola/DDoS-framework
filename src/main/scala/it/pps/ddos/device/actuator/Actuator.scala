@@ -7,30 +7,42 @@ import akka.actor.typed.scaladsl.AskPattern.schedulerFromActorSystem
 
 import scala.annotation.targetName
 import scala.concurrent.Await
-import scala.concurrent.duration.Duration
+import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.language.postfixOps
 import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceBehavior
+import it.pps.ddos.device.DeviceBehavior.Tick
+import it.pps.ddos.device.actuator.Actuator.TimedActuatorKey
 
 import scala.collection.immutable.ArraySeq
 
 object Actuator:
-    def apply[T](fsm: FSM[T]): Actuator[T] = new Actuator[T](fsm)
+    private case object TimedActuatorKey
+    def apply[T](id: String, fsm: FSM[T]): Actuator[T] = new Actuator[T](id, fsm)
 
-
-class Actuator[T](val FSM: FSM[T], destinations: ActorRef[Message]*) extends Device[String](destinations.toList):
+class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[Message]*) extends Device[String](id, destinations.toList):
     private var currentState: State[T] = FSM.getInitialState
     this.status = Some(currentState.name)
     private var pendingState: Option[State[T]] = None
     private var utilityActor: ActorRef[Message] = null
     println(s"Initial state ${FSM.getInitialState.name}")
 
-    def getBehavior: Behavior[Message] = Behaviors.setup[Message] { context =>
+    override def behavior(): Behavior[Message] = Behaviors.setup[Message] { context =>
       utilityActor = spawnUtilityActor(context)
       if (currentState.isInstanceOf[LateInit]) utilityActor ! SetActuatorRef(context.self)
       Behaviors.receiveMessagePartial(basicActuatorBehavior(context).orElse(DeviceBehavior.getBasicBehavior(this, context)))
     }
+
+    def behaviorWithTimer(duration: FiniteDuration): Behavior[Message] =
+        Behaviors.setup { context =>
+          Behaviors.withTimers { timer =>
+            timer.startTimerAtFixedRate(TimedActuatorKey, Tick, duration)
+            Behaviors.receiveMessagePartial(basicActuatorBehavior(context)
+            .orElse(DeviceBehavior.getBasicBehavior(this, context))
+            .orElse(DeviceBehavior.getTimedBehavior(this, context)))
+          }
+        }
 
     private def basicActuatorBehavior(context: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] = { message =>
         println(message)
@@ -50,7 +62,6 @@ class Actuator[T](val FSM: FSM[T], destinations: ActorRef[Message]*) extends Dev
                 Behaviors.same
             case Subscribe(requester: ActorRef[Message]) =>
                 subscribe(context.self, requester)
-                requester ! SubscribeAck(context.self)
                 Behaviors.same
             case PropagateStatus(requester: ActorRef[Message]) =>
                 propagate(context.self, requester)
