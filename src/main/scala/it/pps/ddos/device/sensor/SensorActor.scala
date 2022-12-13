@@ -2,25 +2,25 @@ package it.pps.ddos.device.sensor
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-
 import it.pps.ddos.device.sensor.Sensor
-import it.pps.ddos.device.DeviceProtocol.{ Message, PropagateStatus, UpdateStatus, Subscribe, Unsubscribe }
+import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Subscribe, Unsubscribe, UpdateStatus}
 import it.pps.ddos.device.DeviceBehavior
 import it.pps.ddos.device.DeviceBehavior.Tick
+import it.pps.ddos.utils.MeasureType
 
 import scala.concurrent.duration.FiniteDuration
 
 /*
 * Actor of a basic sensor and timed sensor
 * */
-private object SensorActor:
-  def apply[A, B](sensor: Sensor[A, B]): SensorActor[A, B] = new SensorActor(sensor)
+object SensorActor:
+  def apply[I >: MeasureType, O >: MeasureType](sensor: Sensor[I, O]): SensorActor[I, O] = new SensorActor(sensor)
 
-private class SensorActor[A, B](val sensor: Sensor[A, B]):
+private class SensorActor[I >: MeasureType, O >: MeasureType](val sensor: Sensor[I, O]):
   private case object TimedSensorKey
 
   private def getBasicSensorBehavior(ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] =
-    case UpdateStatus[B](value) =>
+    case UpdateStatus[I](value) =>
       sensor.update(ctx.self, value)
       Behaviors.same
 

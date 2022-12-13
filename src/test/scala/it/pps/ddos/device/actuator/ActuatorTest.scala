@@ -10,7 +10,6 @@ import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import scala.collection.immutable.ListMap
 import scala.concurrent.duration.Duration
 import it.pps.ddos.device.DeviceProtocol.*
-import it.pps.ddos.device.sensor.Public
 
 class ActuatorTest extends AnyFlatSpec:
 
