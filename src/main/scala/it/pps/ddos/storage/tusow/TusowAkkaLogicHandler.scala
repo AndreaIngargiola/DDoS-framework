@@ -21,7 +21,8 @@ object TusowAkkaLogicHandler{
 class TusowAkkaLogicHandler extends TusowService {
 
     type LogicSpace = TupleSpace[LogicTuple, LogicTemplate, String, Term, LogicMatch]
-    val logicSpaces = new scala.collection.mutable.HashMap[String, LogicSpace]
+    private val logicSpaces = new scala.collection.mutable.HashMap[String, LogicSpace]
+    private val timeout = 10
 
     override def validateTupleSpace(in: TupleSpaceID): Future[IOResponse] = Future.successful(IOResponse(logicSpaces.contains(in.id)))
 
