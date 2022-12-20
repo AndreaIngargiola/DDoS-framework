@@ -21,6 +21,7 @@ class GroupTest extends AnyFlatSpec:
   "A blocking group of devices" should "not compute the aggregated result until all devices has sent their status" in testBlockingBehavior()
   it should "be possible to update already stored values until computation is triggered" in testUpdatingValues()
   "A non-blocking group of devices" should "trigger its computation whenever a new value is received from the sources list" in testNonBlockingBehavior()
+  "A ReduceGroup" should "reduce the whole list of values in an aggregated single value" in testReduce()
 
   val testKit: ActorTestKit = ActorTestKit()
 
@@ -41,7 +42,6 @@ class GroupTest extends AnyFlatSpec:
         Behaviors.receivePartial { (ctx, message) =>
           message match
             case Statuses[String](author, value) =>
-
               destination ! Status(author, value.sorted)
               Behaviors.same
         }
@@ -116,3 +116,10 @@ class GroupTest extends AnyFlatSpec:
     Thread.sleep(500)
     sensors(1) ! PropagateStatus(testProbe.ref)
     testProbe.expectMessage(Status(toUppercaseActor, List("STATUS OF SENSOR 1", "STATUS OF SENSOR 2")))
+
+  private def testReduce(): Unit =
+    resetVariables()
+    val toUppercaseActor = testKit.spawn(BlockingGroup(new ReduceGroup[String, String]("id", sensors, List(testProbe.ref), f => f.sorted.mkString(" | "))))
+    Thread.sleep(500)
+    for s <- sensors yield s ! PropagateStatus(testProbe.ref)
+    testProbe.expectMessage(Status(toUppercaseActor, "Status of sensor 1 | Status of sensor 2 | Status of sensor 3"))
