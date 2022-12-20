@@ -3,10 +3,10 @@ package it.pps.ddos.deployment
 import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.config.{Config, ConfigFactory}
 import it.pps.ddos.device.DeviceProtocol.{Message, Subscribe}
-import it.pps.ddos.device.actuator.Actuator
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.cluster.typed.{Cluster, Join}
 import it.pps.ddos.deployment.graph.Graph
+import it.pps.ddos.device.Device
 
 import scala.collection.{immutable, mutable}
 
@@ -44,14 +44,14 @@ object Deployer:
         }
     ), id, setupClusterConfig("0"))
 
-  private def deploy[T](devices: Actuator[T]*): Unit =
+  private def deploy[T](devices: Device[T]*): Unit =
     devices.foreach(dev =>
       val actorRefWithInt = orderedActorSystemRefList.filter(_.actorSystem.ref == getMinSpawnActorNode).head
       actorRefWithInt.actorSystem.ref ! InternSpawn(dev.id, dev.behavior())
       actorRefWithInt.numberOfActorSpawned + 1
     )
 
-  def deploy[T](devicesGraph: Graph[Actuator[T]]): Unit =
+  def deploy[T](devicesGraph: Graph[Device[T]]): Unit =
     devicesGraph @-> ((k,_) => deploy(k))
     devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
 
