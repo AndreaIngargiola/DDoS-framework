@@ -19,7 +19,8 @@ class DeployerTest extends AnyFlatSpec:
         fsm
 
     "A graph should" should "be deployed without errors" in {
-        Deployer.init(5)
+        Deployer.initSeedNodes()
+        Deployer.addNodes(5)
         Thread.sleep(2000)
         val fsm = createTestBasicStateFSM()
         val a1 = Actuator[String]("a1", fsm)
