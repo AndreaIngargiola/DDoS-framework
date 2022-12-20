@@ -6,11 +6,11 @@ import it.pps.ddos.device.{Device, sensor}
 import it.pps.ddos.device.sensor.Sensor
 import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.actuator.Actuator
-import it.pps.ddos.utils.MeasureType
+import it.pps.ddos.utils.DataType
 
 import scala.concurrent.duration.FiniteDuration
 
-trait Condition[I >: MeasureType, O >: MeasureType](condition: (I | O) => Boolean, replyTo: ActorRef[Message]):
+trait Condition[I: DataType, O: DataType](condition: (I | O) => Boolean, replyTo: ActorRef[Message]):
   self: Sensor[I, O] =>
   override def update(selfId: ActorRef[Message], physicalInput: I): Unit =
     self.status = Option(preProcess(physicalInput))

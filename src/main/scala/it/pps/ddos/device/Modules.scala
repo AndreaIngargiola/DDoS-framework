@@ -4,6 +4,8 @@ import akka.actor.typed.{ActorRef, Behavior}
 import it.pps.ddos.device.DeviceProtocol.{Message, Status, SubscribeAck, UnsubscribeAck}
 import it.pps.ddos.device.actuator.Actuator
 import it.pps.ddos.device.sensor.{Sensor, SensorActor}
+import it.pps.ddos.utils.DataType
+import it.pps.ddos.utils.given
 
 import scala.concurrent.duration.FiniteDuration
 
@@ -11,12 +13,12 @@ trait Timer(val duration: FiniteDuration):
   self: Device[_] =>
 
   override def behavior(): Behavior[Message] =
-    if (this.isInstanceOf[Sensor[_, _]])
-      SensorActor(this.asInstanceOf[Sensor[_, _]]).behaviorWithTimer(duration)
+    if (this.isInstanceOf[Sensor[Any, Any]])
+      SensorActor(this.asInstanceOf[Sensor[Any, Any]]).behaviorWithTimer(duration)
     else
       this.asInstanceOf[Actuator[_]].behaviorWithTimer(duration)
 
-trait Public[T]:
+trait Public[T: DataType]:
   self: Device[T] =>
   override def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
     status match

@@ -7,6 +7,9 @@ import it.pps.ddos.device.Device
 import it.pps.ddos.device.Timer
 import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, Subscribe, SubscribeAck, Unsubscribe, UnsubscribeAck, UpdateStatus}
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
+import it.pps.ddos.utils.DataType
+import it.pps.ddos.device.Public
+import it.pps.ddos.utils.given
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File
@@ -163,11 +166,11 @@ class SensorTest extends AnyFlatSpec:
     val sensorActor: Behavior[Message] = timedSensor.behavior()
     val sensor = testKit.spawn(sensorActor)
 
-    sendUpdateStatusMessage(sensor, "test")
+    sendUpdateStatusMessage(sensor, String("test"))
 
     for (_ <- 1 to 3) {
       Thread.sleep(interval.toMillis)
-      testProbe.expectMessage(Status(sensor, "test"))
+      testProbe.expectMessage(Status(sensor, String("test")))
     }
     testKit.stop(sensor)
 
@@ -194,7 +197,7 @@ class SensorTest extends AnyFlatSpec:
 
   ///PROCESSED DATA SENSOR TESTS
   val testProbeProcessed: TestProbe[Message] = testKit.createTestProbe[Message]()
-  val sensorProcessed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessed.ref), x => x.toString) with Public[String]
+  val sensorProcessed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessed.ref), x => x.toInt) with Public[Int]
   val sensorProcessedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessed).behavior())
 
   private def testPublicProcessedDataSensorSendCorrect(): Unit =
@@ -202,9 +205,9 @@ class SensorTest extends AnyFlatSpec:
     sendPropagateStatusMessage(sensorProcessedActor)
     testProbeProcessed.expectNoMessage()
     //test non-empty msg but Int it's converted in String
-    sendUpdateStatusMessage(sensorProcessedActor, 5)
+    sendUpdateStatusMessage(sensorProcessedActor, "5")
     sendPropagateStatusMessage(sensorProcessedActor)
-    testProbeProcessed.expectMessage(Status(sensorProcessedActor, "5"))
+    testProbeProcessed.expectMessage(Status(sensorProcessedActor, 5))
 
   private def testPublicProcessedDataSensorStatusWrong(): Unit =
     //test updating with wrong type(need to be Int for working)
@@ -227,16 +230,16 @@ class SensorTest extends AnyFlatSpec:
 
   //PROCESSED DATA-CONDITION SENSOR TESTS
   val testProbeProcessedCondition: TestProbe[Message] = testKit.createTestProbe[Message]()
-  val sensorProcessedCondition = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedCondition.ref), x => x.toString) with Public[String] with Condition[String, Int]((_.toString.contains("5")), testProbeProcessedCondition.ref)
+  val sensorProcessedCondition = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedCondition.ref), x => x.toInt) with Public[Int] with Condition[String, Int](_.toString contains "5", testProbeProcessedCondition.ref)
   val sensorProcessedConditionActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedCondition).behavior())
 
   private def testProcessedConditionSensorCorrect(): Unit =
-    sensorProcessedCondition.update(sensorProcessedConditionActor, 5) //updating trigger the automatic send of the current status to the testProbe
+    sensorProcessedCondition.update(sensorProcessedConditionActor, "5") //updating trigger the automatic send of the current status to the testProbe
     Thread.sleep(800)
-    testProbeProcessedCondition.expectMessage(Status(sensorProcessedConditionActor, "5"))
+    testProbeProcessedCondition.expectMessage(Status(sensorProcessedConditionActor, 5))
 
   private def testProcessedConditionSensorWrong(): Unit =
-    sensorProcessedCondition.update(sensorProcessedConditionActor, 0)
+    sensorProcessedCondition.update(sensorProcessedConditionActor, "0")
     Thread.sleep(800)
     testProbeProcessedCondition.expectNoMessage()
 
@@ -271,20 +274,20 @@ class SensorTest extends AnyFlatSpec:
   //PROCESSED DATA-TIMED SENSOR TESTS
   private def testProcessedTimedSensorCorrect(): Unit =
     val testProbeProcessedTimed: TestProbe[Message] = testKit.createTestProbe[Message]()
-    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toString) with Public[String]
+    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toInt) with Public[Int]
     val sensorProcessedTimedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedTimed).behaviorWithTimer(FiniteDuration(2, "second")))
 
-    sensorProcessedTimed.update(sensorProcessedTimedActor, 2)
+    sensorProcessedTimed.update(sensorProcessedTimedActor, "2")
 
     for (_ <- 1 to 3) {
       Thread.sleep(2000)
-      testProbeProcessedTimed.expectMessage(Status(sensorProcessedTimedActor, "2"))
+      testProbeProcessedTimed.expectMessage(Status(sensorProcessedTimedActor, 2))
     }
     testKit.stop(sensorProcessedTimedActor)
 
   private def testProcessedTimedSensorWrong(): Unit =
     val testProbeProcessedTimed: TestProbe[Message] = testKit.createTestProbe[Message]()
-    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toString) with Public[String]
+    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toInt) with Public[Int]
     val sensorProcessedTimedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedTimed).behaviorWithTimer(FiniteDuration(2, "second")))
 
     assertTypeError("sensorProcessedTime.update(sensorProcessedTimedActor, 0.1)")
