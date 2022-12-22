@@ -29,12 +29,12 @@ abstract class Group[I, O](id: String, private val sources: ActorList, destinati
 
   def copy(): Group[I,O]
 
-class ReduceGroup[I, O](id: String, sources: ActorList, destinations: ActorList, val f: List[I] => O)
-  extends Group[I, O](id, sources, destinations) :
+class ReduceGroup[I](id: String, sources: ActorList, destinations: ActorList, val f: (I, I) => I)
+  extends Group[I, I](id, sources, destinations) :
   override def compute(signature: Actor): Unit =
-    status = Option(f(data.values.flatten.toList))
+    status = Option(data.values.flatten.toList.reduce(f))
 
-  override def copy(): ReduceGroup[I,O] = new ReduceGroup(id, sources, destinations, f)
+  override def copy(): ReduceGroup[I] = new ReduceGroup(id, sources, destinations, f)
 
 private trait MultipleOutputs[O]:
   self: Device[List[O]] =>

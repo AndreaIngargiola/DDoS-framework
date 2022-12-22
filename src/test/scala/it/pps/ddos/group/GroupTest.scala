@@ -119,7 +119,8 @@ class GroupTest extends AnyFlatSpec:
 
   private def testReduce(): Unit =
     resetVariables()
-    val toUppercaseActor = testKit.spawn(BlockingGroup(new ReduceGroup[String, String]("id", sensors, List(testProbe.ref), f => f.sorted.mkString(" | "))))
+    val toUppercaseActor = testKit.spawn(BlockingGroup(new ReduceGroup[String]("id", sensors, List(testProbe.ref), _ + " | " + _)))
+    for s <- sensors yield s ! UpdateStatus("status of sensor")
     Thread.sleep(500)
-    for s <- sensors yield s ! PropagateStatus(testProbe.ref)
-    testProbe.expectMessage(Status(toUppercaseActor, "Status of sensor 1 | Status of sensor 2 | Status of sensor 3"))
+    for s <- sensors yield s ! PropagateStatus(testProbe.ref); Thread.sleep(500)
+    testProbe.expectMessage(Status(toUppercaseActor, "status of sensor | status of sensor | status of sensor"))
