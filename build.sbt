@@ -5,11 +5,15 @@ name := "ddos-framework"
 
 scalaVersion := "3.2.1"
 
+enablePlugins(AkkaGrpcPlugin)
+
 ThisBuild / assemblyMergeStrategy := {
     case PathList("META-INF", _*) => MergeStrategy.discard
     case _ => MergeStrategy.first
 }
 val AkkaVersion = "2.7.0"
+
+resolvers += "jitpack" at "https://jitpack.io"
 
 //Add Monix dependencies
 libraryDependencies += "io.monix" %% "monix" % "3.4.1"
@@ -29,3 +33,6 @@ libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor-testkit-typed" % AkkaVersion % Test,
     "com.typesafe.akka" %% "akka-cluster-typed" % AkkaVersion,
 )
+
+libraryDependencies += "com.github.Filocava99" % "TuSoW" % "0.8.3"
+

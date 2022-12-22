@@ -1,18 +1,18 @@
 package it.pps.ddos.device
 
 import akka.actor.typed.ActorRef
+import akka.actor.typed.Behavior
 import it.pps.ddos.device.DeviceProtocol.{Message, Status}
 
 import scala.collection.immutable.List
+import scala.concurrent.duration.FiniteDuration
 
-trait Device[T](protected var destinations: List[ActorRef[Message]]){
+trait Device[T](val id: String, protected var destinations: List[ActorRef[Message]]):
   protected var status: Option[T] = None
   def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
     if requester == selfId then status match
       case Some(value) => for (actor <- destinations) actor ! Status[T](selfId, value)
       case None =>
-
-  def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = destinations = toAdd :: destinations
-
-  def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit = destinations = destinations.filter(_ != toRemove)
-}
+  def subscribe(selfId: ActorRef[Message], toAdd: ActorRef[Message]): Unit = ()
+  def unsubscribe(selfId: ActorRef[Message], toRemove: ActorRef[Message]): Unit = ()
+  def behavior(): Behavior[Message]
