@@ -60,7 +60,8 @@ object Deployer:
     //----------------------------------------------------------------
     var groups: Map[Tag, List[ActorRef[Message]]] = Map.empty
     devicesGraph @-> ((k, _) => groups = combineIterables(groups, (k.getTags() zip List.fill(k.getTags().length)(List(devicesActorRefMap(k.id).ref))).toMap))
-    for((tag, sources) <- groups) yield deploy
+    for((tag, sources) <- groups) yield deploy(tag.generateGroup(sources))
+    //TODO resolve nondeterminism in actor spawn
 
   private def combineIterables[K, V](a: Map[K, List[V]], b: Map[K, List[V]]): Map[K, List[V]] =
     a ++ b.map { case (k, v) => k -> (v ++ a.getOrElse(k, List.empty)) }

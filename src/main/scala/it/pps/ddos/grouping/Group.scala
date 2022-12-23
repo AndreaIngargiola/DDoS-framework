@@ -53,3 +53,8 @@ class MapGroup[I, O](id: String, sources: ActorList, destinations: ActorList, va
     )
 
   override def copy(): MapGroup[I,O] = new MapGroup(id, sources, destinations, f)
+
+trait Deployable[I,O](tm: TriggerMode) extends Group[I,O]:
+  override def behavior(): Behavior[Message] = tm match
+    case TriggerMode.BLOCKING => BlockingGroup(this)
+    case TriggerMode.NONBLOCKING => NonBlockingGroup(this)
