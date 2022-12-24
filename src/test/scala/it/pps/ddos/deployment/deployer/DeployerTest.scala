@@ -1,13 +1,13 @@
-package it.pps.ddos
+package it.pps.ddos.deployment.deployer
 
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
-import it.pps.ddos.deployment.graph.Graph
-import it.pps.ddos.device.actuator.{Actuator, BasicState, FSM}
-import org.scalatest.flatspec.AnyFlatSpec
 import it.pps.ddos.deployment.Deployer
-import it.pps.ddos.device.DeviceProtocol.Message
+import it.pps.ddos.deployment.graph.Graph
 import it.pps.ddos.device.Device
+import it.pps.ddos.device.DeviceProtocol.Message
+import it.pps.ddos.device.actuator.{Actuator, BasicState, FSM}
 import it.pps.ddos.device.sensor.BasicSensor
+import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.immutable.ListMap
 
