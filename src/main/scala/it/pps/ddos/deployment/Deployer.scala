@@ -53,11 +53,12 @@ object Deployer:
     )
 
   def deploy[T](devicesGraph: Graph[Device[T]]): Unit =
-    devicesGraph @-> ((k,_) => deploy(k))
-    devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id))
-                                 .filter(_.isDefined)
-                                 .foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
-    //----------------------------------------------------------------
+    val alreadyDeployed = mutable.Set[Device[T]]()
+    devicesGraph @-> ((k,edges) => {
+      if(!alreadyDeployed.contains(k)) deploy(k)
+      edges.filter(!alreadyDeployed.contains(_)).foreach(deploy(_))
+    })
+    devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
     var groups: Map[Tag, List[ActorRef[Message]]] = Map.empty
     devicesGraph @-> ((k, _) => groups = combineIterables(groups, (k.getTags() zip List.fill(k.getTags().length)(List(devicesActorRefMap(k.id).ref))).toMap))
     for((tag, sources) <- groups) yield deploy(tag.generateGroup(sources))
