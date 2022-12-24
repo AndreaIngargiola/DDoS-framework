@@ -1,5 +1,6 @@
 package it.pps.ddos.deployment
 
+import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.config.{Config, ConfigFactory}
 import it.pps.ddos.device.DeviceProtocol.{Message, Subscribe}
@@ -21,11 +22,12 @@ object Deployer:
 
   private var devicesActorRefMap = Map.empty[String, ActorRef[Message]]
 
+  private val deviceServiceKey = ServiceKey[Message]("DeviceService")
+
   def initSeedNodes(): Unit =
     ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2551"))
     ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2552"))
     
-
   def addNodes(numberOfNode: Int): Unit =
     for (i <- 1 to numberOfNode)
         val as = createActorSystem("ClusterSystem")
@@ -39,7 +41,9 @@ object Deployer:
         Behaviors.receiveMessage { msg =>
           msg match
             case InternSpawn(id, behavior) =>
-              devicesActorRefMap = Map((id, context.spawn(behavior, "Actuator"))) ++ devicesActorRefMap
+              val ar = context.spawn(behavior, "Device")
+              devicesActorRefMap = Map((id, ar)) ++ devicesActorRefMap
+              context.system.receptionist ! Receptionist.Register(deviceServiceKey, ar)
               Behaviors.same
         }
     ), id, setupClusterConfig("0"))
