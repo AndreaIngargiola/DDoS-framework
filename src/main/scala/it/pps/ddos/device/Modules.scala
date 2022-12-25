@@ -5,18 +5,17 @@ import it.pps.ddos.device.DeviceProtocol.{Message, Status, SubscribeAck, Unsubsc
 import it.pps.ddos.device.actuator.Actuator
 import it.pps.ddos.device.sensor.{Sensor, SensorActor}
 import it.pps.ddos.utils.DataType
-import it.pps.ddos.utils.given
+import it.pps.ddos.utils.AnyDataType
 
 import scala.concurrent.duration.FiniteDuration
 
 trait Timer(val duration: FiniteDuration):
   self: Device[_] =>
 
-  override def behavior(): Behavior[Message] =
-    if (this.isInstanceOf[Sensor[Any, Any]])
-      SensorActor(this.asInstanceOf[Sensor[Any, Any]]).behaviorWithTimer(duration)
-    else
-      this.asInstanceOf[Actuator[_]].behaviorWithTimer(duration)
+  override def behavior(): Behavior[Message] = this match
+    case sensor: Sensor[Any, Any] => SensorActor(sensor).behaviorWithTimer(duration)
+    case _ => this.asInstanceOf[Actuator[_]].behaviorWithTimer(duration)
+
 
 trait Public[T: DataType]:
   self: Device[T] =>

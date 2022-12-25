@@ -6,7 +6,7 @@ import akka.actor.typed.ActorRef
 import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.Public
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
-import it.pps.ddos.utils.given_DataType_String
+import it.pps.ddos.utils.StringDataType
 import it.pps.ddos.utils.DataType
 import org.scalatest.flatspec.AnyFlatSpec
 
