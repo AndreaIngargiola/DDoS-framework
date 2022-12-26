@@ -5,7 +5,7 @@ import scala.collection.immutable.List
 import akka.actor.typed.ActorRef
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceProtocol.*
-import it.pps.ddos.device.sensor.Public
+import it.pps.ddos.device.Public
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
