@@ -8,7 +8,7 @@ import akka.cluster.typed.{Cluster, Join}
 import it.pps.ddos.deployment.graph.Graph
 import it.pps.ddos.device.Device
 import it.pps.ddos.grouping.Tag
-
+import it.pps.ddos.grouping.ActorList
 import scala.collection.{immutable, mutable}
 
 object Deployer:
@@ -59,13 +59,12 @@ object Deployer:
       edges.filter(!alreadyDeployed.contains(_)).foreach(deploy(_))
     })
     devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
-    var groups: Map[Tag, List[ActorRef[Message]]] = Map.empty
-    devicesGraph @-> ((k, _) => groups = combineIterables(groups, (k.getTags() zip List.fill(k.getTags().length)(List(devicesActorRefMap(k.id).ref))).toMap))
-    for((tag, sources) <- groups) yield deploy(tag.generateGroup(sources))
-    //TODO resolve nondeterminism in actor spawn
 
-  private def combineIterables[K, V](a: Map[K, List[V]], b: Map[K, List[V]]): Map[K, List[V]] =
-    a ++ b.map { case (k, v) => k -> (v ++ a.getOrElse(k, List.empty)) }
+    val tagList = for {
+      n <- devicesGraph.getNodes()
+      t <- n.getTags()
+    } yield (t -> n.id)
+    deployGroups(tagList.groupMap((tag, id) => tag)((tag, id) => id))
 
   private def setupClusterConfig(port: String): Config =
     val hostname = "127.0.0.1"
@@ -80,3 +79,16 @@ object Deployer:
 
   private def getMinSpawnActorNode: ActorRef[InternSpawn] =
     orderedActorSystemRefList.minBy(x => x.numberOfActorSpawned).actorSystem
+
+  private def deployGroups[T](groups: Map[Tag, Set[String]] = Map.empty): Unit =
+    var deployedTags = Set.empty[Tag]
+    groups.isEmpty match
+      case false =>
+        for {
+          (tag, sourceSet) <- groups.map((tag, sources) => (tag, sources.map(id => devicesActorRefMap get id))) if !sourceSet.contains(None)
+        } yield {
+          deploy(tag.generateGroup(sourceSet.toList.map(opt => opt.get)))
+          deployedTags = deployedTags + tag
+        }
+        deployGroups(groups -- deployedTags)
+      case true =>

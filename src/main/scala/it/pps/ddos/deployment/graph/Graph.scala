@@ -59,3 +59,5 @@ case class Graph[T](private val initialNode: Option[T], private var edges: Map[T
     def ? (node: T): Boolean = edges.contains(node)
 
     def ++ (edge: (T, T)): Unit = edges = Graph.addEdge(edges, edge)
+
+    def getNodes(): Set[T] = edges.keys.toSet ++ edges.values.flatten.toSet
