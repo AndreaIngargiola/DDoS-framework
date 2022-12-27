@@ -80,8 +80,8 @@ object Deployer:
   private def getMinSpawnActorNode: ActorRef[InternSpawn] =
     orderedActorSystemRefList.minBy(x => x.numberOfActorSpawned).actorSystem
 
-  private def deployGroups[T](groups: Map[Tag, Set[String]] = Map.empty): Unit =
-    var deployedTags = Set.empty[Tag]
+  private def deployGroups[T](groups: Map[Tag[_,_], Set[String]] = Map.empty): Unit =
+    var deployedTags = Set.empty[Tag[_,_]]
     groups.isEmpty match
       case false =>
         for {

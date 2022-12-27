@@ -29,12 +29,25 @@ abstract class Group[I, O](id: String, private val sources: ActorList, destinati
 
   def copy(): Group[I,O]
 
+  // Defining canEqual method
+  def canEqual(a: Any) = a.isInstanceOf[Group[_,_]]
+
+  // Defining equals method with override keyword
+  override def equals(that: Any): Boolean =
+    that match
+      case that: Group[_,_] => that.canEqual(this) &&
+        this.hashCode == that.hashCode
+      case _ => false
+
 class ReduceGroup[I, O](id: String, sources: ActorList, destinations: ActorList, val f: (O, I) => O, val neutralElem: O)
   extends Group[I, O](id, sources, destinations) :
   override def compute(signature: Actor): Unit =
     status = Option(data.values.flatten.toList.foldLeft(neutralElem)(f))
 
   override def copy(): ReduceGroup[I, O] = new ReduceGroup(id, sources, destinations, f, neutralElem)
+
+  override def hashCode(): Int =
+    id.hashCode() + sources.hashCode() + destinations.hashCode() + f.hashCode() + neutralElem.hashCode()
 
 private trait MultipleOutputs[O]:
   self: Device[List[O]] =>
@@ -54,7 +67,12 @@ class MapGroup[I, O](id: String, sources: ActorList, destinations: ActorList, va
 
   override def copy(): MapGroup[I,O] = new MapGroup(id, sources, destinations, f)
 
+  override def hashCode(): Int =
+    id.hashCode() + sources.hashCode() + destinations.hashCode() + f.hashCode()
+
 trait Deployable[I,O](tm: TriggerMode) extends Group[I,O]:
   override def behavior(): Behavior[Message] = tm match
     case TriggerMode.BLOCKING => BlockingGroup(this)
     case TriggerMode.NONBLOCKING => NonBlockingGroup(this)
+
+  override def hashCode(): Int = super.hashCode()

@@ -8,7 +8,6 @@ import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.sensor.{BasicSensor, Public, Sensor, SensorActor}
 import org.scalatest.flatspec.AnyFlatSpec
 import it.pps.ddos.grouping.*
-import it.pps.ddos.grouping.TriggerModes.*
 import org.scalactic.Prettifier.default
 
 import scala.collection.immutable.List
