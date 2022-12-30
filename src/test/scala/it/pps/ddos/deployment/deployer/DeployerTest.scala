@@ -56,7 +56,6 @@ class DeployerTest extends AnyFlatSpec:
   "A graph of sensors should" should "be deploy without errors" in {
     Thread.sleep(2000)
     val graph = createTestBasicStateSensor()
-    graph.size must be (3)
     println(graph)
     Deployer.deploy(graph)
   }
@@ -74,7 +73,6 @@ class DeployerTest extends AnyFlatSpec:
       a2 -> a4,
       a3 -> a1
     )
-    graph.size must be (4)
     println(graph)
     Deployer.deploy(graph)
   }
