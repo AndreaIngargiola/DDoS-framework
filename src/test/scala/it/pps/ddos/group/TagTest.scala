@@ -7,7 +7,7 @@ import akka.actor.typed.scaladsl.Behaviors
 import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.sensor.{BasicSensor, ProcessedDataSensor, Public, Sensor, SensorActor}
 import org.scalatest.flatspec.AnyFlatSpec
-import it.pps.ddos.grouping.*
+import it.pps.ddos.grouping.{tagging, *}
 import org.scalactic.Prettifier.default
 import it.pps.ddos.deployment.Deployer
 import it.pps.ddos.deployment.graph.Graph
@@ -18,6 +18,7 @@ import scala.concurrent.duration.{Duration, FiniteDuration}
 import scala.util.Failure
 import scala.util.Try
 import it.pps.ddos.device
+import it.pps.ddos.grouping.tagging.{MapTag, Tag, Taggable, TriggerMode}
 
 
 class TagTest extends AnyFlatSpec:
@@ -68,8 +69,8 @@ class TagTest extends AnyFlatSpec:
     assert(p.getTags() == List(testTag))
 
   private def testNestedTag(): Unit =
-    val tag1 =  Tag[String, String]("1", List.empty, s => s, TriggerMode.BLOCKING)
-    val tag2 =  Tag[String, String]("2", List.empty, s => s, TriggerMode.BLOCKING)
+    val tag1 =  tagging.Tag[String, String]("1", List.empty, s => s, TriggerMode.BLOCKING)
+    val tag2 =  tagging.Tag[String, String]("2", List.empty, s => s, TriggerMode.BLOCKING)
     tag1 ## tag2
     assert(tag1.getTags() == List(tag2))
     val thrown = intercept[IllegalArgumentException] {
@@ -79,28 +80,28 @@ class TagTest extends AnyFlatSpec:
 
   private def testGroupEquality(): Unit =
     val f: String => String = s => s
-    val tag1: MapTag[String, String] =  Tag[String, String]("1", List.empty, f, TriggerMode.BLOCKING)
+    val tag1: MapTag[String, String] =  tagging.Tag[String, String]("1", List.empty, f, TriggerMode.BLOCKING)
     val generatedGroup: MapGroup[String, String] = tag1.generateGroup(sensors)
     val normalGroup: MapGroup[String, String] = new MapGroup[String, String]("1", sensors, List.empty, f)
     assert(generatedGroup.equals(normalGroup))
 
   private def testInverseMarking(): Unit =
     resetVariables()
-    val tag1 = Tag[String, String]("1", List.empty, s => s, TriggerMode.BLOCKING)
+    val tag1 = tagging.Tag[String, String]("1", List.empty, s => s, TriggerMode.BLOCKING)
     val sensorA = new PublicSensor("A")
     val sensorB = new PublicSensor("B")
-    val tagC = Tag[Int, String]("C", List.empty, i => i.toString, TriggerMode.NONBLOCKING)
+    val tagC = tagging.Tag[Int, String]("C", List.empty, i => i.toString, TriggerMode.NONBLOCKING)
     tag1 <--(sensorA, sensorB, tagC)
     assert(sensorA.getTags() == List(tag1) && sensorB.getTags() == List(tag1) && tagC.getTags() == List(tag1))
 
   private def testTagDeployment(): Unit =
     resetVariables()
     val f: String => String = s => s.toUpperCase
-    val toUppercase = Tag[String, String]("tag1", List(determinizer), f , TriggerMode.BLOCKING)
-    val addNumber = Tag[String, String]("tag2", List.empty, "1 " + _, TriggerMode.BLOCKING)
-    val addNumber2 = Tag[String, String]("tag3", List.empty,"2 " + _, TriggerMode.BLOCKING)
-    val addNumber3 = Tag[String, String]("tag4", List.empty,"3 " + _, TriggerMode.BLOCKING)
-    val addNumber4 = Tag[String, String]("tag5", List.empty,"4 " + _, TriggerMode.BLOCKING)
+    val toUppercase = tagging.Tag[String, String]("tag1", List(determinizer), f , TriggerMode.BLOCKING)
+    val addNumber = tagging.Tag[String, String]("tag2", List.empty, "1 " + _, TriggerMode.BLOCKING)
+    val addNumber2 = tagging.Tag[String, String]("tag3", List.empty,"2 " + _, TriggerMode.BLOCKING)
+    val addNumber3 = tagging.Tag[String, String]("tag4", List.empty,"3 " + _, TriggerMode.BLOCKING)
+    val addNumber4 = tagging.Tag[String, String]("tag5", List.empty,"4 " + _, TriggerMode.BLOCKING)
     val sensorA = new PublicSensor("a")
     val sensorB = new PublicSensor("b")
 

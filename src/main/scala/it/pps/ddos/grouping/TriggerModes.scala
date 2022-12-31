@@ -38,7 +38,3 @@ object NonBlockingGroup extends GroupActor:
       g.insert(author, value); g.compute(context.self);
       context.self ! PropagateStatus(context.self)
       Behaviors.same
-
-enum TriggerMode:
-  case BLOCKING extends TriggerMode
-  case NONBLOCKING extends TriggerMode

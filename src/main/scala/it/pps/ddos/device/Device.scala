@@ -3,7 +3,7 @@ package it.pps.ddos.device
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
 import it.pps.ddos.device.DeviceProtocol.{Message, Status}
-import it.pps.ddos.grouping.Taggable
+import it.pps.ddos.grouping.tagging.Taggable
 
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration

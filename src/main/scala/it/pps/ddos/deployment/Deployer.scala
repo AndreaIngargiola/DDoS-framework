@@ -8,8 +8,8 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.cluster.typed.{Cluster, Join}
 import it.pps.ddos.deployment.graph.Graph
 import it.pps.ddos.device.Device
-import it.pps.ddos.grouping.Tag
 import it.pps.ddos.grouping.ActorList
+import it.pps.ddos.grouping.tagging.Tag
 
 import scala.collection.{immutable, mutable}
 import scala.jdk.Accumulator

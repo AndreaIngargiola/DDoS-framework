@@ -1,20 +1,12 @@
-package it.pps.ddos.grouping
-import scala.collection.immutable.List
-import scala.util.Try
+package it.pps.ddos.grouping.tagging
+
 import akka.actor.typed.ActorRef
 import it.pps.ddos.device.DeviceProtocol.Message
 
-trait Taggable:
-  private var tags: List[Tag[_,_]] = List.empty
+import it.pps.ddos.grouping.*
 
-  private def addTag(t: Tag[_,_]): Unit =
-    t.getTags().contains(this) match
-      case false => tags = tags ++ List(t)
-      case true => throw IllegalArgumentException("circular tag nesting detected")
-
-  def ##(newTags: Tag[_,_]*): Try[Unit] = Try { for (t <- newTags) yield addTag(t) }
-
-  def getTags(): List[Tag[_,_]] = tags
+import scala.collection.immutable.List
+import scala.util.Try
 
 abstract class Tag[I,O](val id: String) extends Taggable:
   def <--(toTag: Taggable*): Unit = for (taggable <- toTag) yield taggable ## this
