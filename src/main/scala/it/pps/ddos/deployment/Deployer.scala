@@ -10,7 +10,9 @@ import it.pps.ddos.deployment.graph.Graph
 import it.pps.ddos.device.Device
 import it.pps.ddos.grouping.Tag
 import it.pps.ddos.grouping.ActorList
+
 import scala.collection.{immutable, mutable}
+import scala.jdk.Accumulator
 
 object Deployer:
   private case class ActorSysWithActor(actorSystem: ActorSystem[InternSpawn], numberOfActorSpawned: Int)
@@ -25,6 +27,9 @@ object Deployer:
 
   private val deviceServiceKey = ServiceKey[Message]("DeviceService")
 
+  def getDevicesActorRefMap: Map[String, ActorRef[Message]] =
+    devicesActorRefMap
+
   def initSeedNodes(): Unit =
     ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2551"))
     ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2552"))
@@ -36,20 +41,19 @@ object Deployer:
         orderedActorSystemRefList += ActorSysWithActor(as, 0)
 
   private def createActorSystem(id: String): ActorSystem[InternSpawn] =
-    println("Creating actor system " + id)
     ActorSystem(Behaviors.setup(
       context =>
         Behaviors.receiveMessage { msg =>
           msg match
             case InternSpawn(id, behavior) =>
-              val ar = context.spawn(behavior, "Device")
+              val ar = context.spawn(behavior, id)
               devicesActorRefMap = Map((id, ar)) ++ devicesActorRefMap
               context.system.receptionist ! Receptionist.Register(deviceServiceKey, ar)
               Behaviors.same
         }
     ), id, setupClusterConfig("0"))
 
-  private def deploy[T](devices: Device[T]*): Unit =
+  def deploy[T](devices: Device[T]*): Unit =
     devices.foreach(dev =>
       val actorRefWithInt = orderedActorSystemRefList.filter(_.actorSystem.ref == getMinSpawnActorNode).head
       actorRefWithInt.actorSystem.ref ! InternSpawn(dev.id, dev.behavior())
@@ -59,15 +63,15 @@ object Deployer:
   def deploy[T](devicesGraph: Graph[Device[T]]): Unit =
     val alreadyDeployed = mutable.Set[Device[T]]()
     devicesGraph @-> ((k,edges) => {
-      if(!alreadyDeployed.contains(k)) deploy(k)
-      edges.filter(!alreadyDeployed.contains(_)).foreach(deploy(_))
+      if(!alreadyDeployed.contains(k))
+        deploy(k)
+        alreadyDeployed += k
+      edges.filter(!alreadyDeployed.contains(_)).foreach{ d =>
+        deploy(d)
+        alreadyDeployed += d
+      }
     })
-    devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
-
-    val tagList = for {
-      n <- devicesGraph.getNodes()
-      t <- n.getTags()
-    } yield (t -> n.id)
+    val tagList = retrieveTagSet(devicesGraph.getNodes())
     deployGroups(tagList.groupMap((tag, id) => tag)((tag, id) => id))
 
   private def setupClusterConfig(port: String): Config =
@@ -88,6 +92,7 @@ object Deployer:
     var deployedTags = Set.empty[Tag[_,_]]
     groups.isEmpty match
       case false =>
+
         for {
           (tag, sourceSet) <- groups.map((tag, sources) => (tag, sources.map(id => devicesActorRefMap get id))) if !sourceSet.contains(None)
         } yield {
@@ -96,3 +101,23 @@ object Deployer:
         }
         deployGroups(groups -- deployedTags)
       case true =>
+
+  private def retrieveTagSet[T](devicesList: Set[Device[T]]): Set[(Tag[_,_], String)] =
+    val nodeTags = for {
+      n <- devicesList
+      t <- n.getTags()
+    } yield (t -> n.id)
+    nodeTags ++ exploreInnerTags(nodeTags.map((t,id) => t).toSet, Set.empty)
+
+  private def exploreInnerTags(newTags: Set[Tag[_,_]], accumulator: Set[(Tag[_,_], String)] = Set.empty): Set[(Tag[_,_], String)] =
+    newTags.isEmpty match
+      case true => accumulator
+      case false =>
+        val tagTags = for {
+          t <- newTags
+          nestedTag <- t.getTags() if !accumulator.contains((nestedTag -> t.id))
+        } yield (nestedTag -> t.id)
+        exploreInnerTags(
+          tagTags.map((t, id) => t).filter(t => !accumulator.map((tag, id) => tag).contains(t)),
+          accumulator ++ tagTags
+        )
