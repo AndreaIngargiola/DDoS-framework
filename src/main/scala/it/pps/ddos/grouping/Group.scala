@@ -29,27 +29,13 @@ abstract class Group[I, O](id: String, private val sources: ActorList, destinati
 
   def copy(): Group[I,O]
 
-class ReduceGroup[I, O](id: String, sources: ActorList, destinations: ActorList, val f: List[I] => O)
-  extends Group[I, O](id, sources, destinations) :
-  override def compute(signature: Actor): Unit =
-    status = Option(f(data.values.flatten.toList))
+  // Defining canEqual method
+  def canEqual(a: Any) = a.isInstanceOf[Group[_,_]]
 
-  override def copy(): ReduceGroup[I,O] = new ReduceGroup(id, sources, destinations, f)
+  // Defining equals method with override keyword
+  override def equals(that: Any): Boolean =
+    that match
+      case that: Group[_,_] => that.canEqual(this) &&
+        this.hashCode == that.hashCode
+      case _ => false
 
-private trait MultipleOutputs[O]:
-  self: Device[List[O]] =>
-  override def propagate(selfId: Actor, requester: Actor): Unit = status match
-    case Some(value) => for (actor <- destinations) actor ! Statuses[O](selfId, value)
-    case None =>
-
-class MapGroup[I, O](id: String, sources: ActorList, destinations: ActorList, val f: I => O)
-  extends Group[I, List[O]](id, sources, destinations) with MultipleOutputs[O] :
-  override def compute(signature: Actor): Unit =
-    status = Option(
-      for {
-        list <- data.values.toList
-        elem <- list
-      } yield f(elem)
-    )
-
-  override def copy(): MapGroup[I,O] = new MapGroup(id, sources, destinations, f)
