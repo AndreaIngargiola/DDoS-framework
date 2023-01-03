@@ -8,7 +8,7 @@ import it.pps.ddos.device.Timer
 import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, Subscribe, SubscribeAck, Unsubscribe, UnsubscribeAck, UpdateStatus}
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor}
 import it.pps.ddos.device.Public
-import it.pps.ddos.utils.given
+import it.pps.ddos.utils.GivenDataType.given
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File

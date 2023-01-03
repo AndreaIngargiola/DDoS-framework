@@ -8,6 +8,7 @@ import it.pps.ddos.device.DeviceProtocol.Message
 import it.pps.ddos.device.actuator.{Actuator, BasicState, FSM}
 import it.pps.ddos.device.sensor.BasicSensor
 import org.scalatest.flatspec.AnyFlatSpec
+import it.pps.ddos.utils.GivenDataType.given
 
 import scala.collection.immutable.ListMap
 

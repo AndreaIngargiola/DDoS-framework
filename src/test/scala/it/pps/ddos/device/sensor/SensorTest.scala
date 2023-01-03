@@ -9,7 +9,7 @@ import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, Subs
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
 import it.pps.ddos.utils.DataType
 import it.pps.ddos.device.Public
-import it.pps.ddos.utils.given
+import it.pps.ddos.utils.GivenDataType.{ AnyDataType, IntDataType, DoubleDataType, StringDataType }
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File
@@ -76,7 +76,7 @@ class SensorTest extends AnyFlatSpec:
 
     for (_ <- 1 to 3) {
       Thread.sleep(interval.toMillis)
-      testProbe.expectNoMessage()
+      testProbe.expectMessage(Status(sensor, DoubleDataType.defaultValue))
     }
     testKit.stop(sensor)
 
@@ -107,7 +107,7 @@ class SensorTest extends AnyFlatSpec:
 
     for (_ <- 1 to 3) {
       Thread.sleep(interval.toMillis)
-      testProbe.expectNoMessage()
+      testProbe.expectMessage(Status(sensor, DoubleDataType.defaultValue))
     }
     testKit.stop(sensor)
 
@@ -122,7 +122,7 @@ class SensorTest extends AnyFlatSpec:
 
     for (_ <- 1 to 3) {
       Thread.sleep(interval.toMillis)
-      testProbe.expectNoMessage()
+      testProbe.expectMessage(Status(sensor, DoubleDataType.defaultValue))
     }
     testKit.stop(sensor)
 
@@ -134,7 +134,7 @@ class SensorTest extends AnyFlatSpec:
 
     // test of the PropagateStatus case
     sendPropagateStatusMessage(sensor)
-    testProbe.expectNoMessage()
+    testProbe.expectMessage(Status(sensor, DoubleDataType.defaultValue))
 
     // test of the UpdateStatus case
     sendUpdateStatusMessage(sensor, 0.22)
@@ -184,7 +184,7 @@ class SensorTest extends AnyFlatSpec:
   private def testPublicBasicSensorSendCorrect(): Unit =
     //test empty msg
     sendPropagateStatusMessage(sensorBasicActor)
-    testProbeBasic.expectNoMessage()
+    testProbeBasic.expectMessage(Status(sensorBasicActor, StringDataType.defaultValue))
     //test non-empty msg
     sendUpdateStatusMessage(sensorBasicActor, "test")
     sendPropagateStatusMessage(sensorBasicActor)
@@ -203,7 +203,7 @@ class SensorTest extends AnyFlatSpec:
   private def testPublicProcessedDataSensorSendCorrect(): Unit =
     //test empty msg
     sendPropagateStatusMessage(sensorProcessedActor)
-    testProbeProcessed.expectNoMessage()
+    testProbeProcessed.expectMessage(Status(sensorProcessedActor, IntDataType.defaultValue))
     //test non-empty msg but Int it's converted in String
     sendUpdateStatusMessage(sensorProcessedActor, "5")
     sendPropagateStatusMessage(sensorProcessedActor)
@@ -267,7 +267,7 @@ class SensorTest extends AnyFlatSpec:
 
     for (_ <- 1 to 3) {
       Thread.sleep(2000)
-      testProbeBasicTimed.expectNoMessage()
+      testProbeBasicTimed.expectMessage(Status(sensorBasicTimedActor, IntDataType.defaultValue))
     }
     testKit.stop(sensorBasicTimedActor)
 
@@ -294,7 +294,7 @@ class SensorTest extends AnyFlatSpec:
 
     for (_ <- 1 to 3) {
       Thread.sleep(2000)
-      testProbeProcessedTimed.expectNoMessage()
+      testProbeProcessedTimed.expectMessage(Status(sensorProcessedTimedActor, IntDataType.defaultValue))
     }
     testKit.stop(sensorProcessedTimedActor)
 

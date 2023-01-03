@@ -11,7 +11,7 @@ import scala.collection.immutable.ListMap
 import scala.concurrent.duration.Duration
 import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.device.Public
-import it.pps.ddos.utils.given
+import it.pps.ddos.utils.GivenDataType.given
 
 class ActuatorTest extends AnyFlatSpec:
 

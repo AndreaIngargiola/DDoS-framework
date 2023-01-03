@@ -5,7 +5,9 @@ import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import it.pps.ddos.device.DeviceProtocol.*
-import it.pps.ddos.device.sensor.{BasicSensor, Public, Sensor, SensorActor}
+import it.pps.ddos.device.Public
+import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
+import it.pps.ddos.utils.GivenDataType.given
 import org.scalatest.flatspec.AnyFlatSpec
 import it.pps.ddos.grouping.*
 import it.pps.ddos.grouping.TriggerModes.*

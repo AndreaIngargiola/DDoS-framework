@@ -5,6 +5,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.utils.DataType
+import it.pps.ddos.utils.GivenDataType._
 
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration
@@ -13,6 +14,7 @@ import scala.concurrent.duration.FiniteDuration
 * Abstract definition of sensor
 * */
 trait Sensor[I: DataType, O: DataType] extends Device[O]:
+  status = Option(summon[DataType[O]].defaultValue)
   def preProcess: I => O
   def update(selfId: ActorRef[Message], physicalInput: I): Unit = this.status = Option(preProcess(physicalInput))
 
@@ -23,9 +25,7 @@ trait Condition[I: DataType, O: DataType](condition: (I | O) => Boolean, replyTo
   self: Sensor[I, O] =>
   override def update(selfId: ActorRef[Message], physicalInput: I): Unit =
     self.status = Option(preProcess(physicalInput))
-    condition(self.status.get) match
-      case true => replyTo ! Status[O](selfId, self.status.get)
-      case _ =>
+    if condition(self.status.get) then replyTo ! Status[O](selfId, self.status.get)
 
 /*
 * Concrete definition of sensor types
