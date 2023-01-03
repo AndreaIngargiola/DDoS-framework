@@ -54,9 +54,14 @@ object Deployer:
   def deploy[T](devicesGraph: Graph[Device[T]]): Unit =
     val alreadyDeployed = mutable.Set[Device[T]]()
     devicesGraph @-> ((k,edges) => {
-      if(!alreadyDeployed.contains(_)) deploy(_)
-      edges.filter(!alreadyDeployed.contains(_)).foreach(deploy(_))
-    }
+      if(!alreadyDeployed.contains(k))
+        deploy(k)
+        alreadyDeployed += k
+      edges.filter(!alreadyDeployed.contains(_)).foreach{ e =>
+        deploy(e)
+        alreadyDeployed += e
+      }
+    })
     devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
 
   private def setupClusterConfig(port: String): Config =
