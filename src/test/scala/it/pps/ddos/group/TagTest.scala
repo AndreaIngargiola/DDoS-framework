@@ -5,13 +5,15 @@ import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.Behaviors
 import it.pps.ddos.device.DeviceProtocol.*
-import it.pps.ddos.device.sensor.{BasicSensor, ProcessedDataSensor, Public, Sensor, SensorActor}
+import it.pps.ddos.device.sensor.{BasicSensor, ProcessedDataSensor, Sensor, SensorActor}
+import it.pps.ddos.device.Public
 import org.scalatest.flatspec.AnyFlatSpec
 import it.pps.ddos.grouping.{tagging, *}
 import org.scalactic.Prettifier.default
 import it.pps.ddos.deployment.Deployer
 import it.pps.ddos.deployment.graph.Graph
 import it.pps.ddos.device.Device
+import it.pps.ddos.utils.GivenDataType.given
 
 import scala.collection.immutable.List
 import scala.concurrent.duration.{Duration, FiniteDuration}

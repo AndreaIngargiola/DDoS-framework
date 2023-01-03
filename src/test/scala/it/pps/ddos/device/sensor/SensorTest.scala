@@ -196,8 +196,7 @@ class SensorTest extends AnyFlatSpec:
 
   ///PROCESSED DATA SENSOR TESTS
   val testProbeProcessed: TestProbe[Message] = testKit.createTestProbe[Message]()
-  val sensorProcessed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessed.ref), x => x.toInt) with Public[Int]
-  val sensorProcessed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessed.ref), x => x.toString)
+  val sensorProcessed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessed.ref), x => x.toInt)
   val sensorProcessedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessed).behavior())
 
   private def testPublicProcessedDataSensorSendCorrect(): Unit =
@@ -230,8 +229,7 @@ class SensorTest extends AnyFlatSpec:
 
   //PROCESSED DATA-CONDITION SENSOR TESTS
   val testProbeProcessedCondition: TestProbe[Message] = testKit.createTestProbe[Message]()
-  val sensorProcessedCondition = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedCondition.ref), x => x.toInt) with Public[Int] with Condition[String, Int](_.toString contains "5", testProbeProcessedCondition.ref)
-  val sensorProcessedCondition = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedCondition.ref), x => x.toString) with Condition[String, Int]((_.toString.contains("5")), testProbeProcessedCondition.ref)
+  val sensorProcessedCondition = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedCondition.ref), x => x.toInt) with Condition[String, Int]((_.toString.contains("5")), testProbeProcessedCondition.ref)
   val sensorProcessedConditionActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedCondition).behavior())
 
   private def testProcessedConditionSensorCorrect(): Unit =
@@ -275,8 +273,7 @@ class SensorTest extends AnyFlatSpec:
   //PROCESSED DATA-TIMED SENSOR TESTS
   private def testProcessedTimedSensorCorrect(): Unit =
     val testProbeProcessedTimed: TestProbe[Message] = testKit.createTestProbe[Message]()
-    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toInt) with Public[Int]
-    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toString)
+    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toInt)
     val sensorProcessedTimedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedTimed).behaviorWithTimer(FiniteDuration(2, "second")))
 
     sensorProcessedTimed.update(sensorProcessedTimedActor, "2")
@@ -289,8 +286,7 @@ class SensorTest extends AnyFlatSpec:
 
   private def testProcessedTimedSensorWrong(): Unit =
     val testProbeProcessedTimed: TestProbe[Message] = testKit.createTestProbe[Message]()
-    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toInt) with Public[Int]
-    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toString)
+    val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toInt)
     val sensorProcessedTimedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedTimed).behaviorWithTimer(FiniteDuration(2, "second")))
 
     assertTypeError("sensorProcessedTime.update(sensorProcessedTimedActor, 0.1)")
