@@ -10,7 +10,6 @@ import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
 import it.pps.ddos.utils.GivenDataType.given
 import org.scalatest.flatspec.AnyFlatSpec
 import it.pps.ddos.grouping.*
-import it.pps.ddos.grouping.TriggerModes.*
 import org.scalactic.Prettifier.default
 
 import scala.collection.immutable.List
@@ -24,6 +23,7 @@ class GroupTest extends AnyFlatSpec:
   it should "be possible to update already stored values until computation is triggered" in testUpdatingValues()
   "A non-blocking group of devices" should "trigger its computation whenever a new value is received from the sources list" in testNonBlockingBehavior()
   "A ReduceGroup" should "reduce the whole list of values in an aggregated single value" in testReduce()
+  it should " " in test()
 
   val testKit: ActorTestKit = ActorTestKit()
 
@@ -121,7 +121,14 @@ class GroupTest extends AnyFlatSpec:
 
   private def testReduce(): Unit =
     resetVariables()
-    val toUppercaseActor = testKit.spawn(BlockingGroup(new ReduceGroup[String, String]("id", sensors, List(testProbe.ref), f => f.sorted.mkString(" | "))))
+    val toUppercaseActor = testKit.spawn(BlockingGroup(new ReduceGroup[String, String]("id", sensors, List(testProbe.ref), _ + " | " + _, "")))
+    for s <- sensors yield s ! UpdateStatus("status of sensor")
     Thread.sleep(500)
-    for s <- sensors yield s ! PropagateStatus(testProbe.ref)
-    testProbe.expectMessage(Status(toUppercaseActor, "Status of sensor 1 | Status of sensor 2 | Status of sensor 3"))
+    for s <- sensors yield s ! PropagateStatus(testProbe.ref); Thread.sleep(500)
+    testProbe.expectMessage(Status(toUppercaseActor, " | status of sensor | status of sensor | status of sensor"))
+
+  private def test(): Unit =
+    val f = (a: String, b: Int) => a + " " + b.toString()
+    val l = List(1, 2, 3)
+    val res = l.foldLeft("")(f)
+    assert(res == " 1 2 3")

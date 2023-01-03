@@ -7,14 +7,15 @@ import it.pps.ddos.device.actuator.Actuator
 import it.pps.ddos.device.sensor.{Sensor, SensorActor}
 import it.pps.ddos.utils.DataType
 import it.pps.ddos.utils.GivenDataType.AnyDataType
+import it.pps.ddos.device.DeviceProtocol.{Message, Status}
+import it.pps.ddos.grouping.tagging.Taggable
 
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration
-
 /*
 * Abstract definition of device
 * */
-trait Device[T](val id: String, protected var destinations: List[ActorRef[Message]]):
+trait Device[T](val id: String, protected var destinations: List[ActorRef[Message]]) extends Taggable:
   protected var status: Option[T] = None
   def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
     if requester == selfId then status match
