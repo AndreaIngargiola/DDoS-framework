@@ -2,14 +2,14 @@ package it.pps.ddos.device
 
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Subscribe, Unsubscribe}
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, PropagateStatus, Subscribe, Unsubscribe}
 import it.pps.ddos.device.Device
 
 object DeviceBehavior:
   /**
    * declaration of the the private message for the timed actor
    */
-  private[device] case object Tick extends Message
+  private[device] case object Tick extends DeviceMessage
 
   def getBasicBehavior[A](device: Device[A], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] =
     case PropagateStatus(requesterRef) =>
