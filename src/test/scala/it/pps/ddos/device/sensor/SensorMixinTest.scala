@@ -7,6 +7,8 @@ import it.pps.ddos.device.Device
 import it.pps.ddos.device.Timer
 import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, Subscribe, SubscribeAck, Unsubscribe, UnsubscribeAck, UpdateStatus}
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor}
+import it.pps.ddos.device.Public
+import it.pps.ddos.utils.GivenDataType.given
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File
@@ -56,7 +58,6 @@ class SensorMixinTest extends AnyFlatSpec:
     Thread.sleep(800)
 
   private def testBasicSensorActorWithAllModules(): Unit =
-    SensorActor(null)
     val testProbe = testKit.createTestProbe[Message]()
     val interval: FiniteDuration = FiniteDuration(2, "seconds")
     val exampleClass = new BasicSensor[String]("1", List.empty) with Condition[String, String](_ contains "test", testProbe.ref) with Public[String] with Timer(interval)
@@ -121,9 +122,9 @@ class SensorMixinTest extends AnyFlatSpec:
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
-    sendUpdateStatusMessage(sensor, "test") // this value sets true the condition
+    sendUpdateStatusMessage(sensor, String("test")) // this value sets true the condition
     // when the condition is verified it's expected a Status message
-    testProbe.expectMessage(Status(sensor, "test"))
+    testProbe.expectMessage(Status(sensor, String("test")))
 
   private def testBasicSensorActorBroadcastWithPublicModule(): Unit =
     val testProbe = testKit.createTestProbe[Message]()

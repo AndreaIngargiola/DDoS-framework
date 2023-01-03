@@ -3,7 +3,7 @@ package it.pps.ddos.device.actuator
 import akka.actor.typed.Behavior
 import akka.actor.typed.scaladsl.Behaviors
 import org.scalatest.flatspec.AnyFlatSpec
-import it.pps.ddos.device.DeviceProtocol._
+import it.pps.ddos.device.DeviceProtocol.*
 
 import scala.collection.immutable.ListMap
 

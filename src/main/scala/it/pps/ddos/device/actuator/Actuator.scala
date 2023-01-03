@@ -14,6 +14,8 @@ import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceBehavior
 import it.pps.ddos.device.DeviceBehavior.Tick
 import it.pps.ddos.device.actuator.Actuator.TimedActuatorKey
+import it.pps.ddos.utils.DataType
+import it.pps.ddos.utils.GivenDataType._
 
 import scala.collection.immutable.ArraySeq
 
