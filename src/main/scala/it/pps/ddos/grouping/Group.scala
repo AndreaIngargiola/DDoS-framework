@@ -10,8 +10,8 @@ import it.pps.ddos.device.Public
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 
-type Actor = ActorRef[Message]
-type ActorList = List[ActorRef[Message]]
+type Actor = ActorRef[_ >: DeviceMessage]
+type ActorList = List[ActorRef[_ >: DeviceMessage]]
 
 abstract class Group[I, O](id: String, private val sources: ActorList, destinations: ActorList)
   extends Device[O](id, destinations) with Public[O] :
@@ -25,7 +25,7 @@ abstract class Group[I, O](id: String, private val sources: ActorList, destinati
 
   def compute(signature: Actor): Unit
 
-  override def behavior(): Behavior[Message] = Behaviors.unhandled
+  override def behavior[M >: DeviceMessage](): Behavior[M] = Behaviors.unhandled
 
   def copy(): Group[I,O]
 

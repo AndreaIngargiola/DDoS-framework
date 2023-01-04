@@ -11,7 +11,7 @@ object DeviceBehavior:
    */
   private[device] case object Tick extends DeviceMessage
 
-  def getBasicBehavior[A](device: Device[A], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] =
+  def getBasicBehavior[A, M >: DeviceMessage](device: Device[A], ctx: ActorContext[M]): PartialFunction[M, Behavior[M]] =
     case PropagateStatus(requesterRef) =>
       device.propagate(ctx.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
       Behaviors.same
@@ -22,7 +22,7 @@ object DeviceBehavior:
       device.unsubscribe(ctx.self, replyTo)
       Behaviors.same
 
-  def getTimedBehavior[A](device: Device[A], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] =
+  def getTimedBehavior[A, M >: DeviceMessage](device: Device[A], ctx: ActorContext[M]): PartialFunction[M, Behavior[M]] =
     case Tick =>
       device.propagate(ctx.self, ctx.self)
       Behaviors.same

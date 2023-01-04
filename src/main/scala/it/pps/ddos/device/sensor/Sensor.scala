@@ -16,25 +16,25 @@ import scala.concurrent.duration.FiniteDuration
 trait Sensor[I: DataType, O: DataType] extends Device[O]:
   status = Option(summon[DataType[O]].defaultValue)
   def preProcess: I => O
-  def update(selfId: ActorRef[Message], physicalInput: I): Unit = this.status = Option(preProcess(physicalInput))
+  def update[M >: SensorMessage](selfId: ActorRef[M], physicalInput: I): Unit = this.status = Option(preProcess(physicalInput))
 
 /*
 * Abstract definition of sensor modules
 * */
-trait Condition[I: DataType, O: DataType](condition: (I | O) => Boolean, replyTo: ActorRef[Message]):
+trait Condition[I: DataType, O: DataType](condition: (I | O) => Boolean, replyTo: ActorRef[_ >: DeviceMessage]):
   self: Sensor[I, O] =>
-  override def update(selfId: ActorRef[Message], physicalInput: I): Unit =
+  override def update[M >: SensorMessage](selfId: ActorRef[M], physicalInput: I): Unit =
     self.status = Option(preProcess(physicalInput))
-    if condition(self.status.get) then replyTo ! Status[O](selfId, self.status.get)
+    if condition(self.status.get) then replyTo ! Status[O](selfId.asInstanceOf[ActorRef[DeviceMessage]], self.status.get)
 
 /*
 * Concrete definition of sensor types
 * */
-class BasicSensor[O: DataType](id: String, destinations: List[ActorRef[Message]]) extends Device[O](id, destinations) with Sensor[O, O]:
+class BasicSensor[O: DataType](id: String, destinations: List[ActorRef[_ >: DeviceMessage]]) extends Device[O](id, destinations) with Sensor[O, O]:
   override def preProcess: O => O = x => x
-  override def behavior(): Behavior[Message] = SensorActor(this).behavior()
+  override def behavior[M >: DeviceMessage](): Behavior[M] = SensorActor(this).behavior()
 
-class ProcessedDataSensor[I: DataType, O: DataType](id: String, destinations: List[ActorRef[Message]], processFun: I => O)
+class ProcessedDataSensor[I: DataType, O: DataType](id: String, destinations: List[ActorRef[_ >: DeviceMessage]], processFun: I => O)
   extends Device[O](id, destinations) with Sensor[I, O]:
   override def preProcess: I => O = processFun
-  override def behavior(): Behavior[Message] = SensorActor(this).behavior()
+  override def behavior[M >: DeviceMessage](): Behavior[M] = SensorActor(this).behavior()
