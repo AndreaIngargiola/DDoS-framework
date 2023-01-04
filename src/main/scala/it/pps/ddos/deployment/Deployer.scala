@@ -11,6 +11,7 @@ import it.pps.ddos.device.Device
 import it.pps.ddos.grouping.ActorList
 import it.pps.ddos.grouping.tagging.Tag
 
+import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
 
 object Deployer:
@@ -92,11 +93,11 @@ object Deployer:
   private def getMinSpawnActorNode: ActorRef[InternSpawn] =
     orderedActorSystemRefList.minBy(x => x.numberOfActorSpawned).actorSystem
 
+  @tailrec
   private def deployGroups[T](groups: Map[Tag[_,_], Set[String]] = Map.empty): Unit =
     var deployedTags = Set.empty[Tag[_,_]]
     groups.isEmpty match
       case false =>
-
         for {
           (tag, sourceSet) <- groups.map((tag, sources) => (tag, sources.map(id => devicesActorRefMap get id))) if !sourceSet.contains(None)
         } yield {
@@ -113,6 +114,7 @@ object Deployer:
     } yield (t -> n.id)
     nodeTags ++ exploreInnerTags(nodeTags.map((t,id) => t).toSet, Set.empty)
 
+  @tailrec
   private def exploreInnerTags(newTags: Set[Tag[_,_]], accumulator: Set[(Tag[_,_], String)] = Set.empty): Set[(Tag[_,_], String)] =
     newTags.isEmpty match
       case true => accumulator
@@ -122,6 +124,6 @@ object Deployer:
           nestedTag <- t.getTags() if !accumulator.contains((nestedTag -> t.id))
         } yield (nestedTag -> t.id)
         exploreInnerTags(
-          tagTags.map((t, id) => t).filter(t => !accumulator.map((tag, id) => tag).contains(t)),
+          tagTags.map((t, id) => t).diff(accumulator.map((tag, id) => tag)),
           accumulator ++ tagTags
         )
