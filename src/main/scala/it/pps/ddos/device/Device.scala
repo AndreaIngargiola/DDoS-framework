@@ -20,8 +20,8 @@ trait Device[T](val id: String, protected var destinations: List[ActorRef[_ >: D
     if requester == selfId then status match
       case Some(value) => for (actor <- destinations) actor ! Status[T](selfId, value)
       case None =>
-  def subscribe[M >: DeviceMessage](selfId: ActorRef[M], toAdd: ActorRef[M]): Unit = ()
-  def unsubscribe[M >: DeviceMessage](selfId: ActorRef[M], toRemove: ActorRef[M]): Unit = ()
+  def subscribe[M >: DeviceMessage](selfId: ActorRef[M], toSubscribe: ActorRef[M]): Unit = ()
+  def unsubscribe[M >: DeviceMessage](selfId: ActorRef[M], toUnsubscribe: ActorRef[M]): Unit = ()
   def behavior[M >: DeviceMessage](): Behavior[M]
 
 /*
@@ -36,17 +36,14 @@ trait Timer(val duration: FiniteDuration):
 trait Public[T]:
   self: Device[T] =>
   override def propagate[M >: DeviceMessage](selfId: ActorRef[M], requester: ActorRef[M]): Unit = status match
-    case Some(value) =>
-      for (actor <- destinations)
-        actor ! Status[T](selfId, value)
-        println(actor)
+    case Some(value) => for (actor <- destinations) actor ! Status[T](selfId, value)
     case None =>
 
-  override def subscribe[M >: DeviceMessage](selfId: ActorRef[M], toAdd: ActorRef[M]): Unit =
-    if (!(destinations contains toAdd))
-      destinations = toAdd :: destinations
-      toAdd ! SubscribeAck(selfId)
+  override def subscribe[M >: DeviceMessage](selfId: ActorRef[M], toSubscribe: ActorRef[M]): Unit =
+    if !(destinations contains toSubscribe) then
+      destinations = toSubscribe :: destinations
+      toSubscribe ! SubscribeAck(selfId)
 
-  override def unsubscribe[M >: DeviceMessage](selfId: ActorRef[M], toRemove: ActorRef[M]): Unit =
-    destinations = destinations.filter(_ != toRemove)
-    toRemove ! UnsubscribeAck(selfId)
+  override def unsubscribe[M >: DeviceMessage](selfId: ActorRef[M], toUnsubscribe: ActorRef[M]): Unit =
+    destinations = destinations.filter(_ != toUnsubscribe)
+    toUnsubscribe ! UnsubscribeAck(selfId)

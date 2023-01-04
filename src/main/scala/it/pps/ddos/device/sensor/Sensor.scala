@@ -34,7 +34,8 @@ class BasicSensor[O: DataType](id: String, destinations: List[ActorRef[_ >: Devi
   override def preProcess: O => O = x => x
   override def behavior[M >: DeviceMessage](): Behavior[M] = SensorActor(this).behavior()
 
-class ProcessedDataSensor[I: DataType, O: DataType](id: String, destinations: List[ActorRef[_ >: DeviceMessage]], processFun: I => O)
-  extends Device[O](id, destinations) with Sensor[I, O]:
+class ProcessedDataSensor[I: DataType, O: DataType](id: String,
+                                                    destinations: List[ActorRef[_ >: DeviceMessage]],
+                                                    processFun: I => O) extends Device[O](id, destinations) with Sensor[I, O]:
   override def preProcess: I => O = processFun
   override def behavior[M >: DeviceMessage](): Behavior[M] = SensorActor(this).behavior()
