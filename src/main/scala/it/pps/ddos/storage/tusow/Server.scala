@@ -39,6 +39,9 @@ object Server:
 
     private val CLUSTER_NAME = "ClusterSystem"
 
+    /**
+     * Starts a TuSoW server on the default cluster
+     */
     def start(): Unit =
         val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
           .withFallback(ConfigFactory.defaultApplication())
@@ -52,6 +55,11 @@ object Server:
         }), CLUSTER_NAME, conf)
         system.ref ! Start(new TusowAkkaService(system))
 
+/**
+ * Wrapper class for the Akka HTTP server and the TuSoW service
+ * @param system actor system on which the server will run
+ * @param tusowAkkaService TuSoW service implementation
+ */
 class Server(system: akka.actor.ActorSystem, tusowAkkaService: TusowAkkaService):
 
     private val IP = "127.0.0.1"
@@ -66,7 +74,6 @@ class Server(system: akka.actor.ActorSystem, tusowAkkaService: TusowAkkaService)
 
         val bound: Future[Http.ServerBinding] = Http()
           .newServerAt(interface = IP, port = HTTP_PORT)
-          //.enableHttps(serverHttpContext)
           .bind(service)
           .map(_.addToCoordinatedShutdown(hardTerminationDeadline = 10.seconds))
 
