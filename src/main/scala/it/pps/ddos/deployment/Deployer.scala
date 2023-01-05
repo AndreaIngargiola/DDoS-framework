@@ -57,7 +57,6 @@ object Deployer:
         Behaviors.receiveMessage { msg =>
           msg match
             case InternSpawn(id, behavior) =>
-              devicesActorRefMap = Map((id, context.spawn(behavior, id))) ++ devicesActorRefMap
               val ar = context.spawn(behavior, id)
               devicesActorRefMap = Map((id, ar)) ++ devicesActorRefMap
               context.system.receptionist ! Receptionist.Register(deviceServiceKey, ar)
