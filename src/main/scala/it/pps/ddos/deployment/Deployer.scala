@@ -1,5 +1,6 @@
 package it.pps.ddos.deployment
 
+import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.config.{Config, ConfigFactory}
 import it.pps.ddos.device.DeviceProtocol.{Message, Subscribe}
@@ -88,11 +89,10 @@ object Deployer:
         deploy(e)
         alreadyDeployed = alreadyDeployed + k
       }
-    })
+    )
+    devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
     val tagList = retrieveTagSet(devicesGraph.getNodes())
     deployGroups(tagList.groupMap((tag, id) => tag)((tag, id) => id))
-    )
-    //devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
 
   private def setupClusterConfig(port: String): Config =
     val hostname = HOSTNAME
