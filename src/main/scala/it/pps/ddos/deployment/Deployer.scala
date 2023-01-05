@@ -1,12 +1,12 @@
 package it.pps.ddos.deployment
 
 import akka.actor.typed.scaladsl.Behaviors
-import com.typesafe.config.{Config, ConfigFactory}
-import it.pps.ddos.device.DeviceProtocol.{Message, Subscribe}
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.cluster.typed.{Cluster, Join}
+import com.typesafe.config.{Config, ConfigFactory}
 import it.pps.ddos.deployment.graph.Graph
 import it.pps.ddos.device.Device
+import it.pps.ddos.device.DeviceProtocol.{Message, Subscribe}
 
 import scala.collection.{immutable, mutable}
 
@@ -17,15 +17,20 @@ object Deployer:
 
   private val orderedActorSystemRefList = mutable.ListBuffer.empty[ActorSysWithActor]
 
-  private var cluster: Option[Cluster] = None
-
   private var devicesActorRefMap = Map.empty[String, ActorRef[Message]]
 
+  /**
+   * Initialize the seed nodes and the cluster
+   */
   def initSeedNodes(): Unit =
     ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2551"))
     ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2552"))
-    
 
+
+  /**
+   * Add N nodes to the cluster
+   * @param numberOfNode the number of nodes to add
+   */
   def addNodes(numberOfNode: Int): Unit =
     for (i <- 1 to numberOfNode)
         val as = createActorSystem("ClusterSystem")
@@ -33,13 +38,12 @@ object Deployer:
         orderedActorSystemRefList += ActorSysWithActor(as, 0)
 
   private def createActorSystem(id: String): ActorSystem[InternSpawn] =
-    println("Creating actor system " + id)
     ActorSystem(Behaviors.setup(
       context =>
         Behaviors.receiveMessage { msg =>
           msg match
             case InternSpawn(id, behavior) =>
-              devicesActorRefMap = Map((id, context.spawn(behavior, "Actuator"))) ++ devicesActorRefMap
+              devicesActorRefMap = Map((id, context.spawn(behavior, id))) ++ devicesActorRefMap
               Behaviors.same
         }
     ), id, setupClusterConfig("0"))
@@ -51,17 +55,24 @@ object Deployer:
       actorRefWithInt.numberOfActorSpawned + 1
     )
 
+  /**
+   * Deploys a graph of devices into the cluster.
+   * Every edge of the graph represents a device that subscribes to another device.
+   * Each device is deployed on the node with the minimum number of deployed devices.
+   * @param devicesGraph The graph of devices to deploy
+   * @tparam T The type of messages exchanged between devices
+   */
   def deploy[T](devicesGraph: Graph[Device[T]]): Unit =
-    val alreadyDeployed = mutable.Set[Device[T]]()
-    devicesGraph @-> ((k,edges) => {
+    var alreadyDeployed = Set[Device[T]]()
+    devicesGraph @-> ((k,edges) =>
       if(!alreadyDeployed.contains(k))
         deploy(k)
-        alreadyDeployed += k
-      edges.filter(!alreadyDeployed.contains(_)).foreach{ e =>
+        alreadyDeployed = alreadyDeployed + k
+      edges.filter(!alreadyDeployed.contains(_)).foreach { e =>
         deploy(e)
-        alreadyDeployed += e
+        alreadyDeployed = alreadyDeployed + k
       }
-    })
+    )
     devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
 
   private def setupClusterConfig(port: String): Config =
