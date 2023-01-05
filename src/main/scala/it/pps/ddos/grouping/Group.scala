@@ -23,7 +23,7 @@ abstract class Group[I, O](id: String, private val sources: ActorList, destinati
 
   def reset(): Unit = data = Map.empty
 
-  def compute(signature: Actor): Unit
+  def compute(): Unit
 
   override def behavior(): Behavior[Message] = Behaviors.unhandled
 

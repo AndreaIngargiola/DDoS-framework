@@ -7,7 +7,7 @@ import scala.collection.immutable.List
 
 class ReduceGroup[I, O](id: String, sources: ActorList, destinations: ActorList, val f: (O, I) => O, val neutralElem: O)
   extends Group[I, O](id, sources, destinations) :
-  override def compute(signature: Actor): Unit =
+  override def compute(): Unit =
     status = Option(data.values.flatten.toList.foldLeft(neutralElem)(f))
 
   override def copy(): ReduceGroup[I, O] = new ReduceGroup(id, sources, destinations, f, neutralElem)
@@ -23,7 +23,7 @@ private trait MultipleOutputs[O]:
 
 class MapGroup[I, O](id: String, sources: ActorList, destinations: ActorList, val f: I => O)
   extends Group[I, List[O]](id, sources, destinations) with MultipleOutputs[O] :
-  override def compute(signature: Actor): Unit =
+  override def compute(): Unit =
     status = Option(
       for {
         list <- data.values.toList
