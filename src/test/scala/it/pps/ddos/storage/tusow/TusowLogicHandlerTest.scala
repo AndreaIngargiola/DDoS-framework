@@ -12,9 +12,11 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 
 object TusowLogicHandlerTest:
-
+    implicit val duration: Duration = Duration(5000, TimeUnit.MILLISECONDS)
     val tupleSpace = new TupleSpaceID("ddos-storage", TupleSpaceType.LOGIC)
 class TusowLogicHandlerTest extends AnyFlatSpec:
+
+    //DUE TO SOME UNTRACED BUG, THE TESTS FAIL WHEN EXECUTING READS USING AKKA STREAMS
 
     "TusowLogicHandler" should "create a tuple space" in {
         Deployer.initSeedNodes()
@@ -23,9 +25,8 @@ class TusowLogicHandlerTest extends AnyFlatSpec:
         implicit val ec: ExecutionContextExecutor = sys.dispatcher
         val client = Client.createClient(sys, ec)
         val tupleSpace = new TupleSpaceID("ddos-storage", TupleSpaceType.LOGIC)
-        client.createTupleSpace(tupleSpace).onComplete(response => {
-            assert(response.isSuccess)
-        })
+        val response = Await.result[IOResponse](client.createTupleSpace(tupleSpace), TusowLogicHandlerTest.duration)
+        assert(response.response)
     }
 
     it should "check if a tuple space exists" in {
@@ -33,11 +34,9 @@ class TusowLogicHandlerTest extends AnyFlatSpec:
         implicit val sys: ActorSystem = ActorSystem("ClusterSystem")
         implicit val ec: ExecutionContextExecutor = sys.dispatcher
         val client = Client.createClient(sys, ec)
-        createTupleSpace(client).onComplete(response => {
-            client.validateTupleSpace(tupleSpace).onComplete(response => {
-                assert(response.isSuccess)
-            })
-        })
+        Await.result[IOResponse](createTupleSpace(client), TusowLogicHandlerTest.duration)
+        val response = Await.result[IOResponse](client.validateTupleSpace(tupleSpace), TusowLogicHandlerTest.duration)
+        assert(response.response)
     }
 
     it should "write a tuple" in {
@@ -45,12 +44,10 @@ class TusowLogicHandlerTest extends AnyFlatSpec:
         implicit val sys: ActorSystem = ActorSystem("ClusterSystem")
         implicit val ec: ExecutionContextExecutor = sys.dispatcher
         val client = Client.createClient(sys, ec)
-        createTupleSpace(client).onComplete(response => {
-            val tuple = new Tuple("test", "test")
-            client.write(new WriteRequest(Some(tupleSpace), Some(tuple))).onComplete(response => {
-                assert(response.isSuccess)
-            })
-        })
+        Await.result[IOResponse](createTupleSpace(client), TusowLogicHandlerTest.duration)
+        val tuple = new Tuple("test", "test")
+        val response = Await.result[IOResponse](client.write(new WriteRequest(Some(tupleSpace), Some(tuple))), TusowLogicHandlerTest.duration)
+        assert(response.response)
     }
 
     it should "read a tuple" in {
@@ -61,7 +58,7 @@ class TusowLogicHandlerTest extends AnyFlatSpec:
         Thread.sleep(4000)
         Await.result(createTupleSpace(client), Duration(5000, TimeUnit.MILLISECONDS))
         val tuple = new Tuple("", "loves(romeo, juliet).")
-        val readTemplate = new Template.Logic("loves(romeo, X)")
+        val readTemplate = new Template.Logic("loves(romeo, X).")
         val readOrTakeRequestTemplate = ReadOrTakeRequest.Template.LogicTemplate(readTemplate)
         println("write")
         val writeResponse = Await.result[IOResponse](client.write(new WriteRequest(Some(tupleSpace), Some(tuple))), Duration(5000, TimeUnit.MILLISECONDS))
