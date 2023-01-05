@@ -5,7 +5,7 @@ import akka.actor.typed.{ActorRef, Behavior}
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceProtocol.*
 import it.pps.ddos.utils.DataType
-import it.pps.ddos.utils.GivenDataType._
+import it.pps.ddos.utils.GivenDataType.*
 
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration
@@ -16,16 +16,16 @@ import scala.concurrent.duration.FiniteDuration
 trait Sensor[I: DataType, O: DataType] extends Device[O]:
   status = Option(summon[DataType[O]].defaultValue)
   def preProcess: I => O
-  def update[M >: SensorMessage](selfId: ActorRef[M], physicalInput: I): Unit = this.status = Option(preProcess(physicalInput))
+  def update[M >: DeviceMessage](selfId: ActorRef[M], physicalInput: I): Unit = this.status = Option(preProcess(physicalInput))
 
 /*
 * Abstract definition of sensor modules
 * */
-trait Condition[I: DataType, O: DataType](condition: (I | O) => Boolean, replyTo: ActorRef[_ >: DeviceMessage]):
+trait Condition[I: DataType, O: DataType](condition: O => Boolean, replyTo: ActorRef[_ >: DeviceMessage]):
   self: Sensor[I, O] =>
-  override def update[M >: SensorMessage](selfId: ActorRef[M], physicalInput: I): Unit =
+  override def update[M >: DeviceMessage](selfId: ActorRef[M], physicalInput: I): Unit =
     self.status = Option(preProcess(physicalInput))
-    if condition(self.status.get) then replyTo ! Status[O](selfId.asInstanceOf[ActorRef[DeviceMessage]], self.status.get)
+    if condition(self.status.get) then replyTo ! Status[O](selfId, self.status.get)
 
 /*
 * Concrete definition of sensor types
