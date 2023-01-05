@@ -4,25 +4,37 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceProtocol.*
+import it.pps.ddos.utils.DataType
+import it.pps.ddos.utils.GivenDataType._
 
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration
 
 /*
-* Define logic sensors
+* Abstract definition of sensor
 * */
-trait Sensor[A, B] extends Device[A]:
-  def preProcess: B => A
-
-  def update(selfId: ActorRef[Message], physicalInput: B): Unit = this.status = Option(preProcess(physicalInput))
-
-class BasicSensor[A](destinations: List[ActorRef[Message]]) extends Device[A](destinations) with Sensor[A, A]:
-  override def preProcess: A => A = x => x
-
-class ProcessedDataSensor[A, B](destinations: List[ActorRef[Message]], processFun: B => A) extends Device[A](destinations) with Sensor[A, B]:
-  override def preProcess: B => A = processFun
+trait Sensor[I: DataType, O: DataType] extends Device[O]:
+  status = Option(summon[DataType[O]].defaultValue)
+  def preProcess: I => O
+  def update(selfId: ActorRef[Message], physicalInput: I): Unit = this.status = Option(preProcess(physicalInput))
 
 /*
-* Mixin example
+* Abstract definition of sensor modules
 * */
-// class TemperatureSensor extends Sensor[Double] with BasicSensor[Double]
+trait Condition[I: DataType, O: DataType](condition: (I | O) => Boolean, replyTo: ActorRef[Message]):
+  self: Sensor[I, O] =>
+  override def update(selfId: ActorRef[Message], physicalInput: I): Unit =
+    self.status = Option(preProcess(physicalInput))
+    if condition(self.status.get) then replyTo ! Status[O](selfId, self.status.get)
+
+/*
+* Concrete definition of sensor types
+* */
+class BasicSensor[O: DataType](id: String, destinations: List[ActorRef[Message]]) extends Device[O](id, destinations) with Sensor[O, O]:
+  override def preProcess: O => O = x => x
+  override def behavior(): Behavior[Message] = SensorActor(this).behavior()
+
+class ProcessedDataSensor[I: DataType, O: DataType](id: String, destinations: List[ActorRef[Message]], processFun: I => O)
+  extends Device[O](id, destinations) with Sensor[I, O]:
+  override def preProcess: I => O = processFun
+  override def behavior(): Behavior[Message] = SensorActor(this).behavior()

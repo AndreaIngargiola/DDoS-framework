@@ -30,19 +30,16 @@ import scala.concurrent.Future
 import scala.concurrent.duration.DurationInt
 import scala.util.Failure
 import scala.util.Success
-//#import
 
-
-//#server
-object Server {
+object Server:
 
     trait ServerCommand
     case class Start(tusowAkkaService: TusowAkkaService) extends ServerCommand
     case class Stop() extends ServerCommand
 
+    private val CLUSTER_NAME = "ClusterSystem"
 
-    def main(args: Array[String]): Unit = {
-        Deployer.initSeedNodes()
+    def start(): Unit =
         val conf = ConfigFactory.parseString("akka.http.server.preview.enable-http2 = on")
           .withFallback(ConfigFactory.defaultApplication())
         val system = ActorSystem[Any](Behaviors.receive((ctx, message) => {
@@ -52,17 +49,15 @@ object Server {
                     Behaviors.same
                 case Stop => Behaviors.stopped
             }
-        }), "ClusterSystem", conf)
+        }), CLUSTER_NAME, conf)
         system.ref ! Start(new TusowAkkaService(system))
-        Thread.sleep(5000)
-        Client.testClient()
-//        Client.testClientTextual()
-    }
-}
 
-class Server(system: akka.actor.ActorSystem, tusowAkkaService: TusowAkkaService) {
+class Server(system: akka.actor.ActorSystem, tusowAkkaService: TusowAkkaService):
 
-    def run(): Future[Http.ServerBinding] = {
+    private val IP = "127.0.0.1"
+    private val HTTP_PORT = 8080
+
+    private def run(): Future[Http.ServerBinding] =
         implicit val sys = system
         implicit val ec: ExecutionContext = system.dispatcher
 
@@ -70,7 +65,7 @@ class Server(system: akka.actor.ActorSystem, tusowAkkaService: TusowAkkaService)
             TusowServiceHandler(tusowAkkaService)
 
         val bound: Future[Http.ServerBinding] = Http()
-          .newServerAt(interface = "127.0.0.1", port = 8080)
+          .newServerAt(interface = IP, port = HTTP_PORT)
           //.enableHttps(serverHttpContext)
           .bind(service)
           .map(_.addToCoordinatedShutdown(hardTerminationDeadline = 10.seconds))
@@ -78,12 +73,9 @@ class Server(system: akka.actor.ActorSystem, tusowAkkaService: TusowAkkaService)
         bound.onComplete {
             case Success(binding) =>
                 val address = binding.localAddress
-                //println("gRPC server bound to {}:{}", address.getHostString, address.getPort)
+                print("gRPC server bound to {}:{}\n", address.getHostString, address.getPort)
             case Failure(ex) =>
-                //println("Failed to bind gRPC endpoint, terminating system", ex)
+                print("Failed to bind gRPC endpoint, terminating system\n", ex)
                 system.terminate()
         }
-
         bound
-    }
-}

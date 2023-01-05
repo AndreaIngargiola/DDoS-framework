@@ -1,14 +1,19 @@
 package it.pps.ddos.device
 
 import akka.actor.typed.ActorRef
+import scala.collection.immutable.List
 
 /* Definition of the message protocol shared by the sensors */
 object DeviceProtocol:
   trait Message
 
-  case class PropagateStatus(requester: ActorRef[Message]) extends Message
+  abstract class Output[T](author: ActorRef[Message], value:T) extends Message
 
-  case class Status[T](author: ActorRef[Message], value: T) extends Message
+  case class Status[T](author: ActorRef[Message], value: T) extends Output[T](author, value)
+
+  case class Statuses[T](author: ActorRef[Message], value: List[T]) extends Output[List[T]](author, value)
+
+  case class PropagateStatus(requester: ActorRef[Message]) extends Message
 
   case class UpdateStatus[T](value: T) extends Message
 
