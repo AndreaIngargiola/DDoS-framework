@@ -23,30 +23,31 @@ object Actuator:
     private case object TimedActuatorKey
     def apply[T](id: String, fsm: FSM[T]): Actuator[T] = new Actuator[T](id, fsm)
 
-class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[_ >: DeviceMessage]*) extends Device[String](id, destinations.toList):
+class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[_ <: Message]*) extends Device[String](id, destinations.toList):
     private var currentState: State[T] = FSM.getInitialState
     this.status = Some(currentState.name)
     private var pendingState: Option[State[T]] = None
     private var utilityActor: ActorRef[ActuatorMessage] = null
     println(s"Initial state ${FSM.getInitialState.name}")
 
-    override def behavior[M >: DeviceMessage](): Behavior[M] = Behaviors.setup[M] { context =>
+    override def behavior(): Behavior[DeviceMessage] = Behaviors.setup[DeviceMessage] { context =>
       utilityActor = spawnUtilityActor(context)
       if (currentState.isInstanceOf[LateInit]) utilityActor ! SetActuatorRef(context.self)
-      Behaviors.receiveMessagePartial(basicActuatorBehavior(context).orElse(DeviceBehavior.getBasicBehavior(this, context)))
+      Behaviors.receiveMessagePartial(basicActuatorBehavior(context.asInstanceOf[ActorContext[ActuatorMessage]])
+        .orElse(DeviceBehavior.getBasicBehavior(this, context)))
     }
 
-    def behaviorWithTimer[M >: DeviceMessage](duration: FiniteDuration): Behavior[M] =
-        Behaviors.setup { context =>
+    def behaviorWithTimer(duration: FiniteDuration): Behavior[DeviceMessage] =
+        Behaviors.setup[DeviceMessage] { context =>
           Behaviors.withTimers { timer =>
-            timer.startTimerAtFixedRate(TimedActuatorKey, Tick, duration)
-            Behaviors.receiveMessagePartial(basicActuatorBehavior(context)
+            timer.startTimerWithFixedDelay(TimedActuatorKey, Tick, duration)
+            Behaviors.receiveMessagePartial(basicActuatorBehavior(context.asInstanceOf[ActorContext[ActuatorMessage]])
             .orElse(DeviceBehavior.getBasicBehavior(this, context))
             .orElse(DeviceBehavior.getTimedBehavior(this, context)))
           }
         }
 
-    private def basicActuatorBehavior[M >: ActuatorMessage](context: ActorContext[M]): PartialFunction[M, Behavior[M]] = { message =>
+    private def basicActuatorBehavior(context: ActorContext[ActuatorMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] = { message =>
       println(message)
       message match
             case MessageWithoutReply(msg: T, args: _*) =>
@@ -63,14 +64,14 @@ class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[_ >: Devic
                 utilityActor = forceStateChange(context, transition)
                 Behaviors.same
             case Subscribe(requester: ActorRef[ActuatorMessage]) =>
-                subscribe(context.self.asInstanceOf[ActorRef[DeviceMessage]], requester)
+                subscribe(context.self, requester)
                 Behaviors.same
             case PropagateStatus(requester: ActorRef[ActuatorMessage]) =>
-                propagate(context.self.asInstanceOf[ActorRef[DeviceMessage]], requester)
+                propagate(context.self, requester)
                 Behaviors.same
     }
 
-    private def approved(context: ActorContext[_ >: ActuatorMessage]): ActorRef[ActuatorMessage] =
+    private def approved(context: ActorContext[_ <: Message]): ActorRef[ActuatorMessage] =
         if (pendingState.isDefined)
             currentState = pendingState.get
             this.status = Some(currentState.name)
@@ -86,22 +87,22 @@ class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[_ >: Devic
     private def denied(): Unit =
         pendingState = None
 
-    private def messageWithoutReply(msg: T, context: ActorContext[_ >: ActuatorMessage], args: Seq[T]): Behavior[ActuatorMessage] =
+    private def messageWithoutReply(msg: T, context: ActorContext[_ <: Message], args: Seq[T]): Behavior[ActuatorMessage] =
         println(FSM.map.contains((currentState, msg)) && !currentState.isInstanceOf[LateInit])
         if (FSM.map.contains((currentState, msg)) && !currentState.isInstanceOf[LateInit])
             FSM.map((currentState, msg)) match
                 case state =>
                     pendingState = Some(state)
-                    utilityActor ! MessageWithReply(msg, context.self, args*)
+                    utilityActor ! MessageWithReply(msg, context.self.asInstanceOf[ActorRef[ActuatorMessage]], args*)
                 case null =>
         else println("No action found for this ActuatorMessage")
         Behaviors.same
 
-    private def forceStateChange(context: ActorContext[_ >: ActuatorMessage], transition: T): ActorRef[ActuatorMessage] =
+    private def forceStateChange(context: ActorContext[_ <: Message], transition: T): ActorRef[ActuatorMessage] =
         currentState = FSM.map((currentState, transition))
         this.status = Some(currentState.name)
         utilityActor ! Stop()
         propagate(context.self.asInstanceOf[ActorRef[DeviceMessage]], context.self.asInstanceOf[ActorRef[DeviceMessage]])
-        spawnUtilityActor(context)
+        spawnUtilityActor(context.asInstanceOf[ActorContext[ActuatorMessage]])
 
-    private def spawnUtilityActor(context: ActorContext[_ >: ActuatorMessage]) = context.spawn(currentState.getBehavior, s"utilityActor-${java.util.UUID.randomUUID.toString}")
+    private def spawnUtilityActor(context: ActorContext[_ <: Message]) = context.spawn(currentState.getBehavior, s"utilityActor-${java.util.UUID.randomUUID.toString}")

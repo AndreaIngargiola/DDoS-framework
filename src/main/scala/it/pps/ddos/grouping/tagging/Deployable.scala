@@ -5,7 +5,7 @@ import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message}
 import it.pps.ddos.grouping.{BlockingGroup, Group, NonBlockingGroup}
 
 trait Deployable[I, O](tm: TriggerMode) extends Group[I, O] :
-  override def behavior[M >: DeviceMessage](): Behavior[M] = tm match
+  override def behavior(): Behavior[DeviceMessage] = tm match
     case TriggerMode.BLOCKING => BlockingGroup(this)
     case TriggerMode.NONBLOCKING => NonBlockingGroup(this)
 

@@ -8,15 +8,15 @@ import scala.collection.immutable.List
 
 
 object BlockingGroup extends GroupActor:
-  private case class CrossOut[M >: DeviceMessage](source: ActorRef[M]) extends DeviceMessage
+  private case class CrossOut(source: ActorRef[_ <: Message]) extends DeviceMessage
 
-  override def getTriggerBehavior[I,O,M >: DeviceMessage](context: ActorContext[M],
+  override def getTriggerBehavior[I,O](context: ActorContext[DeviceMessage],
                                        g: Group[I,O],
-                                       sources: ActorList): PartialFunction[M, Behavior[M]] =
+                                       sources: ActorList): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
     case Status[I](author, value) =>
       context.self ! Statuses(author, List(value))
       Behaviors.same
-    case Statuses[I](author, value) if g.getSources().contains(author) =>
+    case Statuses[I](author: Actor, value) if g.getSources().contains(author) =>
       g.insert(author, value)
       context.self ! CrossOut(author)
       Behaviors.same
@@ -28,13 +28,13 @@ object BlockingGroup extends GroupActor:
       active(g.getSources(), g, context)
 
 object NonBlockingGroup extends GroupActor:
-  override def getTriggerBehavior[I,O,M >: DeviceMessage](context: ActorContext[M],
+  override def getTriggerBehavior[I,O](context: ActorContext[DeviceMessage],
                                        g: Group[I,O],
-                                     sources: ActorList): PartialFunction[M, Behavior[M]] =
+                                     sources: ActorList): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
     case Status[I](author, value) =>
       context.self ! Statuses(author, List(value))
       Behaviors.same
-    case Statuses[I](author, value) if g.getSources().contains(author) =>
+    case Statuses[I](author: Actor, value) if g.getSources().contains(author) =>
       g.insert(author, value); g.compute(context.self);
       context.self ! PropagateStatus(context.self)
       Behaviors.same

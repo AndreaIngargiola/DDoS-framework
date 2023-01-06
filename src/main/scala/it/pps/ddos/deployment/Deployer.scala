@@ -3,7 +3,7 @@ package it.pps.ddos.deployment
 import akka.actor.typed.receptionist.{Receptionist, ServiceKey}
 import akka.actor.typed.scaladsl.Behaviors
 import com.typesafe.config.{Config, ConfigFactory}
-import it.pps.ddos.device.DeviceProtocol.{Message, Subscribe}
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, Subscribe}
 import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import akka.cluster.typed.{Cluster, Join}
 import it.pps.ddos.deployment.graph.Graph
@@ -20,17 +20,17 @@ object Deployer:
   private final val SEED_NODES = immutable.List[String]("2551","2552")
   private case class ActorSysWithActor(actorSystem: ActorSystem[InternSpawn], numberOfActorSpawned: Int)
 
-  private case class InternSpawn(id: String, behavior: Behavior[Message])
+  private case class InternSpawn(id: String, behavior: Behavior[_ <: Message])
 
   private val orderedActorSystemRefList = mutable.ListBuffer.empty[ActorSysWithActor]
 
   private var cluster: Option[Cluster] = None
 
-  private var devicesActorRefMap = Map.empty[String, ActorRef[Message]]
+  private var devicesActorRefMap = Map.empty[String, ActorRef[DeviceMessage]]
 
-  private val deviceServiceKey = ServiceKey[Message]("DeviceService")
+  private val deviceServiceKey = ServiceKey[DeviceMessage]("DeviceService")
 
-  def getDevicesActorRefMap: Map[String, ActorRef[Message]] =
+  def getDevicesActorRefMap: Map[String, ActorRef[DeviceMessage]] =
     devicesActorRefMap
 
   def initSeedNodes(): Unit =
@@ -49,8 +49,8 @@ object Deployer:
       context =>
         Behaviors.receiveMessage { msg =>
           msg match
-            case InternSpawn(id, behavior) =>
-              val ar = context.spawn(behavior, id)
+            case InternSpawn(id, behavior: Behavior[DeviceMessage]) =>
+              val ar: ActorRef[DeviceMessage] = context.spawn(behavior, id)
               devicesActorRefMap = Map((id, ar)) ++ devicesActorRefMap
               context.system.receptionist ! Receptionist.Register(deviceServiceKey, ar)
               Behaviors.same

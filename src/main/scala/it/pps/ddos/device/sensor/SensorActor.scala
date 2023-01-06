@@ -8,7 +8,7 @@ import it.pps.ddos.device.DeviceBehavior
 import it.pps.ddos.device.DeviceBehavior.Tick
 import it.pps.ddos.utils.DataType
 
-import scala.concurrent.duration.FiniteDuration
+import scala.concurrent.duration._
 
 /*
 * Actor of a basic sensor and timed sensor
@@ -18,22 +18,22 @@ object SensorActor:
 
 class SensorActor[I: DataType, O: DataType](val sensor: Sensor[I, O]):
   private case object TimedSensorKey
-
-  private def getBasicSensorBehavior[M >: SensorMessage](ctx: ActorContext[M]): PartialFunction[M, Behavior[M]] =
+  private def getBasicSensorBehavior(ctx: ActorContext[SensorMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
     case UpdateStatus[I](value) =>
       sensor.update(ctx.self, value)
       Behaviors.same
 
-  def behaviorWithTimer[M >: DeviceMessage](duration: FiniteDuration): Behavior[M] =
+  def behaviorWithTimer(duration: FiniteDuration): Behavior[DeviceMessage] =
     Behaviors.setup { context =>
       Behaviors.withTimers { timer =>
-        timer.startTimerAtFixedRate(TimedSensorKey, Tick, duration)
-        Behaviors.receiveMessagePartial(getBasicSensorBehavior(context)
+        timer.startTimerWithFixedDelay(TimedSensorKey, Tick, duration)
+        Behaviors.receiveMessagePartial(getBasicSensorBehavior(context.asInstanceOf[ActorContext[SensorMessage]])
           .orElse(DeviceBehavior.getBasicBehavior(sensor, context))
           .orElse(DeviceBehavior.getTimedBehavior(sensor, context)))
       }
     }
 
-  def behavior[M >: DeviceMessage](): Behavior[M] = Behaviors.setup { context =>
-    Behaviors.receiveMessagePartial(getBasicSensorBehavior(context).orElse(DeviceBehavior.getBasicBehavior(sensor, context)))
+  def behavior(): Behavior[DeviceMessage] = Behaviors.setup { context =>
+    Behaviors.receiveMessagePartial(getBasicSensorBehavior(context.asInstanceOf[ActorContext[SensorMessage]])
+      .orElse(DeviceBehavior.getBasicBehavior(sensor, context)))
   }

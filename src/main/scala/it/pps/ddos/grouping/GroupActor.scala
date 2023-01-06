@@ -11,15 +11,15 @@ import scala.concurrent.duration.FiniteDuration
 
 trait GroupActor:
   // initial state
-  def apply[M >: DeviceMessage](g: Group[_,_]): Behavior[M] =
-    Behaviors.setup[M] {
+  def apply(g: Group[_,_]): Behavior[DeviceMessage] =
+    Behaviors.setup[DeviceMessage] {
       context =>
         g.getSources().foreach(_ ! Subscribe(context.self))
         connecting(g.getSources(), g.copy())
     }
 
-  def connecting[M >: DeviceMessage](sources: ActorList, g: Group[_,_]): Behavior[M] =
-    Behaviors.withTimers[M] { timer =>
+  def connecting(sources: ActorList, g: Group[_,_]): Behavior[DeviceMessage] =
+    Behaviors.withTimers[DeviceMessage] { timer =>
       timer.startTimerAtFixedRate("connectingStateTimer", Timeout(), FiniteDuration(1, "second"))
       Behaviors.receivePartial { (context, message) =>
         (message, sources) match
@@ -36,9 +36,9 @@ trait GroupActor:
       }
     }
 
-  def active[M >: DeviceMessage](sources: ActorList, g: Group[_,_], context: ActorContext[M]): Behavior[M] =
+  def active(sources: ActorList, g: Group[_,_], context: ActorContext[DeviceMessage]): Behavior[DeviceMessage] =
     Behaviors.receiveMessagePartial(getTriggerBehavior(context, g, sources).orElse(DeviceBehavior.getBasicBehavior(g, context)))
 
-  def getTriggerBehavior[I,O,M >: DeviceMessage](context: ActorContext[M],
+  def getTriggerBehavior[I,O](context: ActorContext[DeviceMessage],
                               g: Group[I,O],
-                              sources: ActorList): PartialFunction[M, Behavior[M]]
+                              sources: ActorList): PartialFunction[DeviceMessage, Behavior[DeviceMessage]]

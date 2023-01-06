@@ -33,27 +33,27 @@ class TagTest extends AnyFlatSpec:
   val testKit: ActorTestKit = ActorTestKit()
   class PublicSensor(id: String) extends BasicSensor[String](id, List.empty) with Public[String]
 
-  private def preparePublicSensor(id: String): ActorRef[Message] =
+  private def preparePublicSensor(id: String): ActorRef[DeviceMessage] =
     val sensor = testKit.spawn(SensorActor(new PublicSensor(id)).behavior())
     sensor ! UpdateStatus("Status of sensor " + id)
     sensor
 
-  private def prepareDevicesList(lenght: Int): List[ActorRef[Message]] =
-    var sensors: List[ActorRef[Message]] = List.empty
+  private def prepareDevicesList(lenght: Int): List[ActorRef[DeviceMessage]] =
+    var sensors: List[ActorRef[DeviceMessage]] = List.empty
     for i <- 1 to lenght yield sensors = sensors ++ List(preparePublicSensor(i.toString))
     sensors
 
-  private var sensors: List[ActorRef[Message]] = prepareDevicesList(3)
-  private var testProbe = testKit.createTestProbe[Message]()
+  private var sensors: List[ActorRef[DeviceMessage]] = prepareDevicesList(3)
+  private var testProbe = testKit.createTestProbe[DeviceMessage]()
   private var determinizer = testKit.spawn(Determinizer(testProbe.ref))
 
   private def resetVariables(): Unit =
     sensors = prepareDevicesList(3)
-    testProbe = testKit.createTestProbe[Message]()
+    testProbe = testKit.createTestProbe[DeviceMessage]()
     determinizer = testKit.spawn(Determinizer(testProbe.ref))
 
   private object Determinizer:
-    def apply(destination: ActorRef[Message]): Behavior[Message] =
+    def apply(destination: ActorRef[DeviceMessage]): Behavior[Message] =
       Behaviors.setup { ctx =>
         Behaviors.receivePartial { (ctx, message) =>
           message match

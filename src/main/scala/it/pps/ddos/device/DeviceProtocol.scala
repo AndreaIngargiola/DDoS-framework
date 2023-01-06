@@ -10,23 +10,23 @@ object DeviceProtocol:
   trait SensorMessage extends DeviceMessage
   trait ActuatorMessage extends DeviceMessage
 
-  abstract class Output[T](author: ActorRef[_ >: DeviceMessage], value: T) extends DeviceMessage
+  abstract class Output[T](author: ActorRef[_ <: Message], value: T) extends SensorMessage, ActuatorMessage
 
-  case class Status[T](author: ActorRef[_ >: DeviceMessage], value: T) extends Output[T](author, value)
+  case class Status[T](author: ActorRef[_ <: Message], value: T) extends Output[T](author, value)
 
-  case class Statuses[T](author: ActorRef[_ >: DeviceMessage], value: List[T]) extends Output[List[T]](author, value)
+  case class Statuses[T](author: ActorRef[_ <: Message], value: List[T]) extends Output[List[T]](author, value)
 
-  case class PropagateStatus(requester: ActorRef[DeviceMessage]) extends DeviceMessage
+  case class PropagateStatus(requester: ActorRef[_ <: Message]) extends DeviceMessage
 
   case class UpdateStatus[T](value: T) extends SensorMessage
 
-  case class Subscribe(replyTo: ActorRef[DeviceMessage]) extends DeviceMessage
+  case class Subscribe(replyTo: ActorRef[_ <: Message]) extends DeviceMessage
 
-  case class SubscribeAck(author: ActorRef[DeviceMessage]) extends DeviceMessage
+  case class SubscribeAck(author: ActorRef[_ <: Message]) extends DeviceMessage
 
-  case class Unsubscribe(replyTo: ActorRef[DeviceMessage]) extends DeviceMessage
+  case class Unsubscribe(replyTo: ActorRef[_ <: Message]) extends DeviceMessage
 
-  case class UnsubscribeAck(author: ActorRef[DeviceMessage]) extends DeviceMessage
+  case class UnsubscribeAck(author: ActorRef[_ <: Message]) extends DeviceMessage
 
   case class MessageWithReply[T](message: T, replyTo: ActorRef[_ >: ActuatorMessage], args: T*) extends ActuatorMessage
 
