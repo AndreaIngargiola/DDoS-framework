@@ -80,19 +80,20 @@ object Deployer:
    * @tparam T The type of messages exchanged between devices
    */
   def deploy[T](devicesGraph: Graph[Device[T]]): Unit =
-    var alreadyDeployed = Set[Device[T]]()
+    var alreadyDeployed = mutable.Set[Device[T]]()
     devicesGraph @-> ((k,edges) =>
-      if(!alreadyDeployed.contains(k))
+      if(!alreadyDeployed.contains(k)){
         deploy(k)
-        alreadyDeployed = alreadyDeployed + k
+        alreadyDeployed += k
+      }
       edges.filter(!alreadyDeployed.contains(_)).foreach { e =>
         deploy(e)
-        alreadyDeployed = alreadyDeployed + e
+        alreadyDeployed += e
       }
     )
     devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
     val tagList = retrieveTagSet(devicesGraph.getNodes())
-    //deployGroups(tagList.groupMap((tag, id) => tag)((tag, id) => id))
+    deployGroups(tagList.groupMap((tag, id) => tag)((tag, id) => id))
 
   private def setupClusterConfig(port: String): Config =
     val hostname = HOSTNAME
