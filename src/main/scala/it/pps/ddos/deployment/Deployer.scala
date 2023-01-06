@@ -15,6 +15,7 @@ import it.pps.ddos.grouping.tagging.Tag
 
 import scala.annotation.tailrec
 import scala.collection.{immutable, mutable}
+import scala.language.postfixOps
 
 object Deployer:
 
@@ -86,12 +87,12 @@ object Deployer:
         alreadyDeployed = alreadyDeployed + k
       edges.filter(!alreadyDeployed.contains(_)).foreach { e =>
         deploy(e)
-        alreadyDeployed = alreadyDeployed + k
+        alreadyDeployed = alreadyDeployed + e
       }
     )
     devicesGraph @-> ((k, v) => v.map(it => devicesActorRefMap.get(it.id)).filter(_.isDefined).foreach(device => devicesActorRefMap(k.id).ref ! Subscribe(device.get.ref)))
     val tagList = retrieveTagSet(devicesGraph.getNodes())
-    deployGroups(tagList.groupMap((tag, id) => tag)((tag, id) => id))
+    //deployGroups(tagList.groupMap((tag, id) => tag)((tag, id) => id))
 
   private def setupClusterConfig(port: String): Config =
     val hostname = HOSTNAME
