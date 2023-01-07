@@ -17,6 +17,11 @@ trait Condition[A, B](condition: (A | B) => Boolean, replyTo: ActorRef[Message])
       case true => replyTo ! Status[A](selfId, self.status.get)
       case _ =>
 
+/**
+ * Let a Device be reachable after creation, letting any signature trigger the status propagation and allowing other devices to
+ * subscribe to the destination list.
+ * @tparam A is the type of the device.
+ */
 trait Public[A]:
   self: Device[A] =>
   override def propagate(selfId: ActorRef[Message], requester: ActorRef[Message]): Unit =
