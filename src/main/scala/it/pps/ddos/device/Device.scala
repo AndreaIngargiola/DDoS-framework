@@ -34,6 +34,11 @@ trait Timer(val duration: FiniteDuration):
     case sensor: Sensor[Any, Any] => SensorActor(sensor).behaviorWithTimer(duration)
     case actuator: Actuator[_] => actuator.behaviorWithTimer(duration)
 
+/**
+ * Let a Device be reachable after creation, letting any signature trigger the status propagation and allowing other devices to
+ * subscribe to the destination list.
+ * @tparam T is the type of the device.
+ */
 trait Public[T]:
   self: Device[T] =>
   override def propagate(selfId: ActorRef[DeviceMessage], requester: ActorRef[DeviceMessage]): Unit = status match
