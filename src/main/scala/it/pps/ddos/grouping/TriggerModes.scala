@@ -6,7 +6,10 @@ import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, Stat
 
 import scala.collection.immutable.List
 
-
+/**
+ * BlockingGroup is a group actor that triggers the computation only when all the sources has sent their status,
+ * then reset the stored values to start anew.
+ */
 object BlockingGroup extends GroupActor:
   private case class CrossOut(source: ActorRef[Message]) extends Message
 
@@ -27,6 +30,10 @@ object BlockingGroup extends GroupActor:
       context.self ! PropagateStatus(context.self)
       active(g.getSources(), g, context)
 
+/**
+ * NonBlockingGroup is a group that triggers the computation each time that receives a status from a source, overriding it
+ * if already present or adding it to the data map if absent. The stored data are only overrided, and never deleted.
+ */
 object NonBlockingGroup extends GroupActor:
   override def getTriggerBehavior[I,O](context: ActorContext[Message],
                                        g: Group[I,O],
