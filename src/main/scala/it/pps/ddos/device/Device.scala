@@ -2,7 +2,7 @@ package it.pps.ddos.device
 
 import akka.actor.typed.ActorRef
 import akka.actor.typed.Behavior
-import it.pps.ddos.device.DeviceProtocol.{ActuatorMessage, DeviceMessage, Message, SensorMessage, Status, SubscribeAck, UnsubscribeAck}
+import it.pps.ddos.device.DeviceProtocol.{ActuatorMessage, DeviceMessage, SensorMessage, Status, SubscribeAck, UnsubscribeAck}
 import it.pps.ddos.device.actuator.Actuator
 import it.pps.ddos.device.sensor.{Sensor, SensorActor}
 import it.pps.ddos.utils.DataType
