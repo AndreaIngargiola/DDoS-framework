@@ -18,8 +18,8 @@ class ReduceGroup[I, O](id: String, sources: ActorList, destinations: ActorList,
 
 private trait MultipleOutputs[O]:
   self: Device[List[O]] =>
-  override def propagate(selfId: ActorRef[_ <: Message], requester: ActorRef[_ <: Message]): Unit = status match
-    case Some(value) => for (actor <- destinations) actor.asInstanceOf[ActorRef[DeviceMessage]] ! Statuses[O](selfId, value)
+  override def propagate(selfId: ActorRef[DeviceMessage], requester: ActorRef[DeviceMessage]): Unit = status match
+    case Some(value) => for (actor <- destinations) actor ! Statuses[O](selfId, value)
     case None =>
 
 class MapGroup[I, O](id: String, sources: ActorList, destinations: ActorList, val f: I => O)

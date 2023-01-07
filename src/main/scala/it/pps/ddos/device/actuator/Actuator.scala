@@ -23,7 +23,7 @@ object Actuator:
     private case object TimedActuatorKey
     def apply[T](id: String, fsm: FSM[T]): Actuator[T] = new Actuator[T](id, fsm)
 
-class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[_ <: Message]*) extends Device[String](id, destinations.toList):
+class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[DeviceMessage]*) extends Device[String](id, destinations.toList):
     private var currentState: State[T] = FSM.getInitialState
     this.status = Some(currentState.name)
     private var pendingState: Option[State[T]] = None
@@ -33,7 +33,7 @@ class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[_ <: Messa
     override def behavior(): Behavior[DeviceMessage] = Behaviors.setup[DeviceMessage] { context =>
       utilityActor = spawnUtilityActor(context)
       if (currentState.isInstanceOf[LateInit]) utilityActor ! SetActuatorRef(context.self)
-      Behaviors.receiveMessagePartial(basicActuatorBehavior(context.asInstanceOf[ActorContext[ActuatorMessage]])
+      Behaviors.receiveMessagePartial(basicActuatorBehavior(context)
         .orElse(DeviceBehavior.getBasicBehavior(this, context)))
     }
 
@@ -41,13 +41,13 @@ class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[_ <: Messa
         Behaviors.setup[DeviceMessage] { context =>
           Behaviors.withTimers { timer =>
             timer.startTimerWithFixedDelay(TimedActuatorKey, Tick, duration)
-            Behaviors.receiveMessagePartial(basicActuatorBehavior(context.asInstanceOf[ActorContext[ActuatorMessage]])
+            Behaviors.receiveMessagePartial(basicActuatorBehavior(context)
             .orElse(DeviceBehavior.getBasicBehavior(this, context))
             .orElse(DeviceBehavior.getTimedBehavior(this, context)))
           }
         }
 
-    private def basicActuatorBehavior(context: ActorContext[ActuatorMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] = { message =>
+    private def basicActuatorBehavior(context: ActorContext[DeviceMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] = { message =>
       println(message)
       message match
             case MessageWithoutReply(msg: T, args: _*) =>
@@ -63,10 +63,10 @@ class Actuator[T](id: String, val FSM: FSM[T], destinations: ActorRef[_ <: Messa
                 println(s"Force state change to ${transition}")
                 utilityActor = forceStateChange(context, transition)
                 Behaviors.same
-            case Subscribe(requester: ActorRef[ActuatorMessage]) =>
+            case Subscribe(requester: ActorRef[DeviceMessage]) =>
                 subscribe(context.self, requester)
                 Behaviors.same
-            case PropagateStatus(requester: ActorRef[ActuatorMessage]) =>
+            case PropagateStatus(requester: ActorRef[DeviceMessage]) =>
                 propagate(context.self, requester)
                 Behaviors.same
     }

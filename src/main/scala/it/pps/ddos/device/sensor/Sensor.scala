@@ -30,12 +30,12 @@ trait Condition[I: DataType, O: DataType](condition: O => Boolean, replyTo: Acto
 /*
 * Concrete definition of sensor types
 * */
-class BasicSensor[O: DataType](id: String, destinations: List[ActorRef[_ <: Message]]) extends Device[O](id, destinations) with Sensor[O, O]:
+class BasicSensor[O: DataType](id: String, destinations: List[ActorRef[DeviceMessage]]) extends Device[O](id, destinations) with Sensor[O, O]:
   override def preProcess: O => O = x => x
   override def behavior(): Behavior[DeviceMessage] = SensorActor(this).behavior()
 
 class ProcessedDataSensor[I: DataType, O: DataType](id: String,
-                                                    destinations: List[ActorRef[_ <: Message]],
+                                                    destinations: List[ActorRef[DeviceMessage]],
                                                     processFun: I => O) extends Device[O](id, destinations) with Sensor[I, O]:
   override def preProcess: I => O = processFun
   override def behavior(): Behavior[DeviceMessage] = SensorActor(this).behavior()

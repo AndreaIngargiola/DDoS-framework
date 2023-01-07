@@ -15,14 +15,14 @@ import scala.reflect.ClassTag
 /*
 * Abstract definition of device
 * */
-trait Device[T](val id: String, protected var destinations: List[ActorRef[_ <: Message]]) extends Taggable:
+trait Device[T](val id: String, protected var destinations: List[ActorRef[DeviceMessage]]) extends Taggable:
   protected var status: Option[T] = None
-  def propagate(selfId: ActorRef[_ <: Message], requester: ActorRef[_ <: Message]): Unit =
+  def propagate(selfId: ActorRef[DeviceMessage], requester: ActorRef[DeviceMessage]): Unit =
     if requester == selfId then status match
-      case Some(value) => for (actor <- destinations) actor.asInstanceOf[ActorRef[DeviceMessage]] ! Status[T](selfId, value)
+      case Some(value) => for (actor <- destinations) actor ! Status[T](selfId, value)
       case None =>
-  def subscribe(selfId: ActorRef[_ <: Message], toSubscribe: ActorRef[_ <: Message]): Unit = ()
-  def unsubscribe(selfId: ActorRef[_ <: Message], toUnsubscribe: ActorRef[_ <: Message]): Unit = ()
+  def subscribe(selfId: ActorRef[DeviceMessage], toSubscribe: ActorRef[DeviceMessage]): Unit = ()
+  def unsubscribe(selfId: ActorRef[DeviceMessage], toUnsubscribe: ActorRef[DeviceMessage]): Unit = ()
   def behavior(): Behavior[DeviceMessage]
 
 /*
@@ -36,15 +36,15 @@ trait Timer(val duration: FiniteDuration):
 
 trait Public[T]:
   self: Device[T] =>
-  override def propagate(selfId: ActorRef[_ <: Message], requester: ActorRef[_ <: Message]): Unit = status match
-    case Some(value) => for (actor <- destinations) actor.asInstanceOf[ActorRef[DeviceMessage]] ! Status[T](selfId, value)
+  override def propagate(selfId: ActorRef[DeviceMessage], requester: ActorRef[DeviceMessage]): Unit = status match
+    case Some(value) => for (actor <- destinations) actor ! Status[T](selfId, value)
     case None =>
 
-  override def subscribe(selfId: ActorRef[_ <: Message], toSubscribe: ActorRef[_ <: Message]): Unit =
+  override def subscribe(selfId: ActorRef[DeviceMessage], toSubscribe: ActorRef[DeviceMessage]): Unit =
     if !(destinations contains toSubscribe) then
       destinations = toSubscribe :: destinations
-      toSubscribe.asInstanceOf[ActorRef[DeviceMessage]] ! SubscribeAck(selfId)
+      toSubscribe ! SubscribeAck(selfId)
 
-  override def unsubscribe(selfId: ActorRef[_ <: Message], toUnsubscribe: ActorRef[_ <: Message]): Unit =
+  override def unsubscribe(selfId: ActorRef[DeviceMessage], toUnsubscribe: ActorRef[DeviceMessage]): Unit =
     destinations = destinations.filter(_ != toUnsubscribe)
-    toUnsubscribe.asInstanceOf[ActorRef[DeviceMessage]] ! UnsubscribeAck(selfId)
+    toUnsubscribe ! UnsubscribeAck(selfId)
