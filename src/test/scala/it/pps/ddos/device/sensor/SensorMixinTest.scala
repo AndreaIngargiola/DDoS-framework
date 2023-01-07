@@ -5,8 +5,10 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import com.typesafe.config.ConfigFactory
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.Timer
-import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, Subscribe, SubscribeAck, Unsubscribe, UnsubscribeAck, UpdateStatus}
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, PropagateStatus, Status, Subscribe, SubscribeAck, Unsubscribe, UnsubscribeAck, UpdateStatus}
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor}
+import it.pps.ddos.device.Public
+import it.pps.ddos.utils.GivenDataType.given
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File
@@ -51,16 +53,15 @@ class SensorMixinTest extends AnyFlatSpec:
 
   val testKit = ActorTestKit()
 
-  private def sendUpdateStatusMessage[A](sensor: ActorRef[Message], value: A): Unit =
+  private def sendUpdateStatusMessage[A](sensor: ActorRef[DeviceMessage], value: A): Unit =
     sensor ! UpdateStatus(value)
     Thread.sleep(800)
 
   private def testBasicSensorActorWithAllModules(): Unit =
-    SensorActor(null)
     val testProbe = testKit.createTestProbe[Message]()
     val interval: FiniteDuration = FiniteDuration(2, "seconds")
     val exampleClass = new BasicSensor[String]("1", List.empty) with Condition[String, String](_ contains "test", testProbe.ref) with Public[String] with Timer(interval)
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
@@ -89,7 +90,7 @@ class SensorMixinTest extends AnyFlatSpec:
     val testProbe = testKit.createTestProbe[Message]()
     val interval: FiniteDuration = FiniteDuration(2, "seconds")
     val exampleClass = new ProcessedDataSensor[Int, Int]("1", List(testProbe.ref), _ + 20) with Condition[Int, Int](_ > 10, testProbe.ref) with Public[Int] with Timer(interval)
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set '20'
@@ -117,18 +118,18 @@ class SensorMixinTest extends AnyFlatSpec:
     val testProbe = testKit.createTestProbe[Message]()
     val destinations: List[ActorRef[Message]] = List(testProbe.ref)
     val exampleClass = new BasicSensor[String]("1", destinations) with Condition[String, String](_ contains "test", destinations.head)
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
-    sendUpdateStatusMessage(sensor, "test") // this value sets true the condition
+    sendUpdateStatusMessage(sensor, String("test")) // this value sets true the condition
     // when the condition is verified it's expected a Status message
-    testProbe.expectMessage(Status(sensor, "test"))
+    testProbe.expectMessage(Status(sensor, String("test")))
 
   private def testBasicSensorActorBroadcastWithPublicModule(): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val exampleClass = new BasicSensor[String]("1", List.empty) with Public[String]
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
@@ -146,7 +147,7 @@ class SensorMixinTest extends AnyFlatSpec:
   private def testBasicSensorActorSubscribeWithPublicModule(): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val exampleClass = new BasicSensor[String]("1", List.empty) with Public[String]
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
@@ -160,7 +161,7 @@ class SensorMixinTest extends AnyFlatSpec:
   private def testBasicSensorActorUnsubscribeWithPublicModule(): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val exampleClass = new BasicSensor[String]("1", List.empty) with Public[String]
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
@@ -179,7 +180,7 @@ class SensorMixinTest extends AnyFlatSpec:
     val testProbe = testKit.createTestProbe[Message]()
     val interval: FiniteDuration = FiniteDuration(2, "seconds")
     val exampleClass = new BasicSensor[String]("1", List.empty) with Timer(interval)
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // sending the Subscribe message, so it's expected the SubscribeAck message
@@ -203,7 +204,7 @@ class SensorMixinTest extends AnyFlatSpec:
   private def testProcessedDataSensorActorWithConditionModule(): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val exampleClass = new ProcessedDataSensor[Int, Int]("1", List(testProbe.ref), _ + 20) with Condition[Int, Int](x => x.isInstanceOf[Int], testProbe.ref)
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set '20'
@@ -214,7 +215,7 @@ class SensorMixinTest extends AnyFlatSpec:
   private def testProcessedDataSensorActorBroadcastWithPublicModule(): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val exampleClass = new ProcessedDataSensor[Int, Int]("1", List.empty, _ + 20) with Public[Int]
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
@@ -232,7 +233,7 @@ class SensorMixinTest extends AnyFlatSpec:
   private def testProcessedDataSensorActorSubscribeWithPublicModule(): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val exampleClass = new ProcessedDataSensor[Int, Int]("1", List.empty, _ + 20) with Public[Int]
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
@@ -246,7 +247,7 @@ class SensorMixinTest extends AnyFlatSpec:
   private def testProcessedDataSensorActorUnsubscribeWithPublicModule(): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val exampleClass = new ProcessedDataSensor[Int, Int]("1", List.empty, _ + 20) with Public[Int]
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     // status update: the status is going to be set "test"
@@ -266,7 +267,7 @@ class SensorMixinTest extends AnyFlatSpec:
     val testProbe = testKit.createTestProbe[Message]()
     val interval: FiniteDuration = FiniteDuration(3, "seconds")
     val exampleClass = new ProcessedDataSensor[Int, Int]("1", List(testProbe.ref), _ + 20) with Timer(interval)
-    val sensorBehavior: Behavior[Message] = exampleClass.behavior()
+    val sensorBehavior: Behavior[DeviceMessage] = exampleClass.behavior()
     val sensor = testKit.spawn(sensorBehavior)
 
     sendUpdateStatusMessage(sensor, 20)

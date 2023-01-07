@@ -4,7 +4,10 @@ import akka.actor.testkit.typed.Effect.Spawned
 import akka.actor.testkit.typed.scaladsl.ActorTestKit
 import akka.actor.typed.ActorRef
 import it.pps.ddos.device.DeviceProtocol.*
-import it.pps.ddos.device.sensor.{BasicSensor, Public, Sensor, SensorActor}
+import it.pps.ddos.device.Public
+import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
+import it.pps.ddos.utils.GivenDataType.given
+import it.pps.ddos.utils.DataType
 import org.scalatest.flatspec.AnyFlatSpec
 
 import scala.collection.immutable.List
@@ -18,7 +21,7 @@ class PublicModuleTest extends AnyFlatSpec:
 
   val testKit: ActorTestKit = ActorTestKit()
 
-  private def preparePublicSensor(): ActorRef[Message] =
+  private def preparePublicSensor(): ActorRef[DeviceMessage] =
     class PublicSensor extends BasicSensor[String]("1", List.empty) with Public[String]
     val sensor = testKit.spawn(SensorActor(new PublicSensor).behavior())
     sensor ! UpdateStatus("BroadcastTest")

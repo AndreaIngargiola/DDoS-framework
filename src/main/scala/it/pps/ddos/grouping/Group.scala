@@ -5,13 +5,13 @@ import scala.collection.immutable.List
 import akka.actor.typed.ActorRef
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceProtocol.*
-import it.pps.ddos.device.sensor.Public
+import it.pps.ddos.device.Public
 
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 
-type Actor = ActorRef[Message]
-type ActorList = List[ActorRef[Message]]
+type Actor = ActorRef[DeviceMessage]
+type ActorList = List[ActorRef[DeviceMessage]]
 
 /**
  * The Group abstract class defines the computation executed for the Devices aggregation.
@@ -25,7 +25,7 @@ abstract class Group[I, O](id: String, private val sources: ActorList, destinati
   extends Device[O](id, destinations) with Public[O] :
   protected var data: Map[Actor, List[I]] = Map.empty
 
-  override def behavior(): Behavior[Message] = Behaviors.unhandled
+  override def behavior(): Behavior[DeviceMessage] = Behaviors.unhandled
 
   def getSources(): ActorList = sources
 

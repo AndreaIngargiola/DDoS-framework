@@ -15,18 +15,8 @@ val AkkaVersion = "2.7.0"
 
 resolvers += "jitpack" at "https://jitpack.io"
 
-//Add Monix dependencies
-libraryDependencies += "io.monix" %% "monix" % "3.4.1"
-
-//Add JFreeChart dependencies
-libraryDependencies += "org.jfree" % "jfreechart" % "1.5.3"
-
 //Add ScalaTest dependencies
 libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.14" % Test
-
-//Add Prolog dependencies
-libraryDependencies += "it.unibo.alice.tuprolog" % "2p-core" % "4.1.1"
-libraryDependencies += "it.unibo.alice.tuprolog" % "2p-ui" % "4.1.1"
 
 libraryDependencies ++= Seq(
     "com.typesafe.akka" %% "akka-actor-typed" % AkkaVersion,

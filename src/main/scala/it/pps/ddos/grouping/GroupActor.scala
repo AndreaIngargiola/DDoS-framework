@@ -3,7 +3,7 @@ package it.pps.ddos.grouping
 import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import it.pps.ddos.device.DeviceBehavior
-import it.pps.ddos.device.DeviceProtocol.{Message, Subscribe, SubscribeAck, Timeout}
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, Subscribe, SubscribeAck, Timeout}
 
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration
@@ -19,8 +19,8 @@ trait GroupActor:
    * @param g is the Group instance that will define the computation of this group.
    * @return a new group actor behavior in the "connecting" state.
    */
-  def apply(g: Group[_,_]): Behavior[Message] =
-    Behaviors.setup[Message] {
+  def apply(g: Group[_,_]): Behavior[DeviceMessage] =
+    Behaviors.setup[DeviceMessage] {
       context =>
         g.getSources().foreach(_ ! Subscribe(context.self))
         connecting(g.getSources(), g.copy())
@@ -32,8 +32,8 @@ trait GroupActor:
    * @param g is the actor state.
    * @return the corresponding behavior.
    */
-  protected def connecting(sources: ActorList, g: Group[_,_]): Behavior[Message] =
-    Behaviors.withTimers[Message] { timer =>
+  protected def connecting(sources: ActorList, g: Group[_,_]): Behavior[DeviceMessage] =
+    Behaviors.withTimers[DeviceMessage] { timer =>
       timer.startTimerAtFixedRate("connectingStateTimer", Timeout(), FiniteDuration(3, "second"))
       Behaviors.receivePartial { (context, message) =>
         (message, sources) match
@@ -57,7 +57,7 @@ trait GroupActor:
    * @param context is the context of the group actor.
    * @return the corresponding behavior.
    */
-  protected def active(sources: ActorList, g: Group[_,_], context: ActorContext[Message]): Behavior[Message] =
+  protected def active(sources: ActorList, g: Group[_,_], context: ActorContext[DeviceMessage]): Behavior[DeviceMessage] =
     Behaviors.receiveMessagePartial(getTriggerBehavior(context, g, sources).orElse(DeviceBehavior.getBasicBehavior(g, context)))
 
   /**
@@ -69,6 +69,6 @@ trait GroupActor:
    * @tparam O is the output type of the computation.
    * @return a partial function that defines a behavior that will be prepended to the standard Device communication protocol.
    */
-  protected def getTriggerBehavior[I,O](context: ActorContext[Message],
-                                        g: Group[I,O],
-                                        sources: ActorList): PartialFunction[Message, Behavior[Message]]
+  protected def getTriggerBehavior[I,O](context: ActorContext[DeviceMessage],
+                              g: Group[I,O],
+                              sources: ActorList): PartialFunction[DeviceMessage, Behavior[DeviceMessage]]
