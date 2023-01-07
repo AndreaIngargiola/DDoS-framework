@@ -13,8 +13,8 @@ import it.pps.ddos.device.actuator.BasicState
 import it.pps.ddos.device.sensor.BasicSensor
 import it.pps.ddos.device.{Device, Public, Timer}
 import it.pps.ddos.gui.controller.DDosController
-import it.pps.ddos.gui.view.DDosGUI.stage
 import it.pps.ddos.storage.tusow.Server
+import javafx.application.Application
 import scalafx.application.JFXApp3
 import scalafx.application.JFXApp3.PrimaryStage
 import scalafx.collections.ObservableBuffer
@@ -31,16 +31,23 @@ import scala.concurrent.{Await, ExecutionContextExecutor}
 
 object DDosGUI extends JFXApp3:
 
+  private val guiController = new DDosController()
+
   override def start(): Unit =
-    val guiController = new DDosController()
     guiController.start()
     createGUI(guiController)
 
   private def createGUI(guiController: DDosController): Unit =
     var actorList: ListView[String] = new ListView[String]()
+    var actorGroups: ListView[String] = new ListView[String]()
+    var history: ListView[String] = new ListView[String]()
     val updateButton: Button = new Button("Update")
     val buttonBox: HBox = new HBox(updateButton)
-    val mainBox: VBox = new VBox(actorList, buttonBox)
+    val mainBox: VBox = new VBox {
+      spacing = 10
+      padding = Insets(10)
+      children = Seq(actorList, actorGroups, history, buttonBox)
+    }
 
     val root: BorderPane = new BorderPane
     root.setCenter(mainBox)
@@ -50,8 +57,8 @@ object DDosGUI extends JFXApp3:
 
     // Aggiunge un evento al bottone per aggiornare la ListView con la lista degli attori registrati nel cluster
     updateButton.onAction = _ =>
-      guiController.updateData()
-      actorList.items = ObservableBuffer.from(guiController.getListOfRef.map("Device-"+_.path.name))
+      history.items = ObservableBuffer.from(guiController.getMsgHistory)
+      actorList.items = ObservableBuffer.from(guiController.getListOfRef.map("Device url: "+_.path))
 
     // Imposta la finestra principale e avvia l'applicazione
     stage = new PrimaryStage:
