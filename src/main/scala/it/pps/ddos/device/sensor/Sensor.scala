@@ -4,7 +4,7 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import akka.actor.typed.{ActorRef, Behavior}
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.DeviceProtocol.*
-import it.pps.ddos.utils.DataType
+import it.pps.ddos.utils.{DataType, GivenDataType}
 import it.pps.ddos.utils.GivenDataType.*
 
 import scala.collection.immutable.List
@@ -14,7 +14,7 @@ import scala.concurrent.duration.FiniteDuration
 * Abstract definition of sensor
 * */
 trait Sensor[I: DataType, O: DataType] extends Device[O]:
-  status = Option(summon[DataType[O]].defaultValue)
+  status = Option(DataType.defaultValue[O])
   def preProcess: I => O
   def update(selfId: ActorRef[SensorMessage], physicalInput: I): Unit = this.status = Option(preProcess(physicalInput))
 

@@ -11,7 +11,7 @@ import it.pps.ddos.grouping.tagging.Taggable
 
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration
-import scala.reflect.ClassTag
+
 /*
 * Abstract definition of device
 * */
