@@ -5,11 +5,11 @@ import akka.actor.typed.{ActorRef, ActorSystem, Behavior}
 import com.typesafe.config.ConfigFactory
 import it.pps.ddos.device.Device
 import it.pps.ddos.device.Timer
-import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Status, Subscribe, SubscribeAck, Unsubscribe, UnsubscribeAck, UpdateStatus}
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, PropagateStatus, Status, Subscribe, SubscribeAck, Unsubscribe, UnsubscribeAck, UpdateStatus}
 import it.pps.ddos.device.sensor.{BasicSensor, Sensor, SensorActor}
 import it.pps.ddos.utils.DataType
 import it.pps.ddos.device.Public
-import it.pps.ddos.utils.GivenDataType.{ AnyDataType, IntDataType, DoubleDataType, StringDataType }
+import it.pps.ddos.utils.GivenDataType.{AnyDataType, DoubleDataType, IntDataType, StringDataType}
 import org.scalatest.flatspec.AnyFlatSpec
 
 import java.io.File
@@ -49,26 +49,26 @@ class SensorTest extends AnyFlatSpec:
 
   val testKit = ActorTestKit()
 
-  private def sendPropagateStatusMessage(sensor: ActorRef[Message]): Unit =
+  private def sendPropagateStatusMessage(sensor: ActorRef[DeviceMessage]): Unit =
     sensor ! PropagateStatus(sensor)
     Thread.sleep(800)
 
-  private def sendUpdateStatusMessage[A](sensor: ActorRef[Message], value: A): Unit =
+  private def sendUpdateStatusMessage[A](sensor: ActorRef[DeviceMessage], value: A): Unit =
     sensor ! UpdateStatus(value)
     Thread.sleep(800)
 
-  private def sendSubscribeMessage(sensor: ActorRef[Message]): Unit =
+  private def sendSubscribeMessage(sensor: ActorRef[DeviceMessage]): Unit =
     sensor ! Subscribe(sensor)
     Thread.sleep(800)
 
-  private def sendUnsubscribeMessage(sensor: ActorRef[Message]): Unit =
+  private def sendUnsubscribeMessage(sensor: ActorRef[DeviceMessage]): Unit =
     sensor ! Unsubscribe(sensor)
     Thread.sleep(800)
 
   private def testPropagateStatusWithTimedSensorActor(interval: FiniteDuration): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val timedSensor = new BasicSensor[Double]("1", List(testProbe.ref)) with Timer(interval)
-    val sensorActor: Behavior[Message] = timedSensor.behavior()
+    val sensorActor: Behavior[DeviceMessage] = timedSensor.behavior()
     val sensor = testKit.spawn(sensorActor)
 
     // test of the PropagateStatus case
@@ -83,7 +83,7 @@ class SensorTest extends AnyFlatSpec:
   private def testUpdateStatusWithTimedSensorActor(interval: FiniteDuration): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val timedSensor = new BasicSensor[Double]("1", List(testProbe.ref)) with Timer(interval)
-    val sensorActor: Behavior[Message] = timedSensor.behavior()
+    val sensorActor: Behavior[DeviceMessage] = timedSensor.behavior()
     val sensor = testKit.spawn(sensorActor)
 
     // test of the UpdateStatus case
@@ -99,7 +99,7 @@ class SensorTest extends AnyFlatSpec:
   private def testSubscribeWithTimedSensorActor(interval: FiniteDuration): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val timedSensor = new BasicSensor[Double]("1", List(testProbe.ref)) with Timer(interval)
-    val sensorActor: Behavior[Message] = timedSensor.behavior()
+    val sensorActor: Behavior[DeviceMessage] = timedSensor.behavior()
     val sensor = testKit.spawn(sensorActor)
 
     // test of the Subscribe case
@@ -114,7 +114,7 @@ class SensorTest extends AnyFlatSpec:
   private def testUnsubscribeWithTimedSensorActor(interval: FiniteDuration): Unit =
     val testProbe = testKit.createTestProbe[Message]()
     val timedSensor = new BasicSensor[Double]("1", List(testProbe.ref)) with Timer(interval)
-    val sensorActor: Behavior[Message] = timedSensor.behavior()
+    val sensorActor: Behavior[DeviceMessage] = timedSensor.behavior()
     val sensor = testKit.spawn(sensorActor)
 
     // test of the Unsubscribe case
@@ -129,7 +129,7 @@ class SensorTest extends AnyFlatSpec:
   // SensorActor Tests
   private def testSensorActorReceiveMessage(): Unit =
     val testProbe = testKit.createTestProbe[Message]()
-    val sensorActor: Behavior[Message] = new BasicSensor[Double]("1", List(testProbe.ref)).behavior()
+    val sensorActor: Behavior[DeviceMessage] = new BasicSensor[Double]("1", List(testProbe.ref)).behavior()
     val sensor = testKit.spawn(sensorActor)
 
     // test of the PropagateStatus case
@@ -163,7 +163,7 @@ class SensorTest extends AnyFlatSpec:
     val testProbe = testKit.createTestProbe[Message]()
     val interval: FiniteDuration = FiniteDuration(2, "seconds")
     val timedSensor = new BasicSensor[Double]("1", List(testProbe.ref)) with Timer(interval)
-    val sensorActor: Behavior[Message] = timedSensor.behavior()
+    val sensorActor: Behavior[DeviceMessage] = timedSensor.behavior()
     val sensor = testKit.spawn(sensorActor)
 
     sendUpdateStatusMessage(sensor, String("test"))
@@ -178,7 +178,7 @@ class SensorTest extends AnyFlatSpec:
   ///BASIC SENSOR TESTS
   val testProbeBasic: TestProbe[Message] = testKit.createTestProbe[Message]()
   val sensorBasic = new BasicSensor[String]("1", List(testProbeBasic.ref))
-  val sensorBasicActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorBasic).behavior())
+  val sensorBasicActor: ActorRef[DeviceMessage] = testKit.spawn(SensorActor(sensorBasic).behavior())
 
   private def testPublicBasicSensorSendCorrect(): Unit =
     //test empty msg
@@ -197,7 +197,7 @@ class SensorTest extends AnyFlatSpec:
   ///PROCESSED DATA SENSOR TESTS
   val testProbeProcessed: TestProbe[Message] = testKit.createTestProbe[Message]()
   val sensorProcessed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessed.ref), x => x.toInt)
-  val sensorProcessedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessed).behavior())
+  val sensorProcessedActor: ActorRef[DeviceMessage] = testKit.spawn(SensorActor(sensorProcessed).behavior())
 
   private def testPublicProcessedDataSensorSendCorrect(): Unit =
     //test empty msg
@@ -215,7 +215,7 @@ class SensorTest extends AnyFlatSpec:
   //BASIC-CONDITION SENSOR TESTS
   val testProbeBasicCondition: TestProbe[Message] = testKit.createTestProbe[Message]()
   val sensorCondition = new BasicSensor[Int]("1", List(testProbeBasicCondition.ref)) with Condition[Int, Int](_ > 5, testProbeBasicCondition.ref)
-  val sensorConditionActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorCondition).behavior())
+  val sensorConditionActor: ActorRef[DeviceMessage] = testKit.spawn(SensorActor(sensorCondition).behavior())
 
   private def testBasicConditionSensorCorrect(): Unit =
     sensorCondition.update(sensorConditionActor, 6) //updating trigger the automatic send of the current status to the testProbe
@@ -230,7 +230,7 @@ class SensorTest extends AnyFlatSpec:
   //PROCESSED DATA-CONDITION SENSOR TESTS
   val testProbeProcessedCondition: TestProbe[Message] = testKit.createTestProbe[Message]()
   val sensorProcessedCondition = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedCondition.ref), x => x.toInt) with Condition[String, Int]((_.toString.contains("5")), testProbeProcessedCondition.ref)
-  val sensorProcessedConditionActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedCondition).behavior())
+  val sensorProcessedConditionActor: ActorRef[DeviceMessage] = testKit.spawn(SensorActor(sensorProcessedCondition).behavior())
 
   private def testProcessedConditionSensorCorrect(): Unit =
     sensorProcessedCondition.update(sensorProcessedConditionActor, "5") //updating trigger the automatic send of the current status to the testProbe
@@ -247,7 +247,7 @@ class SensorTest extends AnyFlatSpec:
   private def testBasicTimedSensorCorrect(): Unit =
     val testProbeBasicTimed: TestProbe[Message] = testKit.createTestProbe[Message]()
     val sensorBasicTimed = new BasicSensor[Int]("1", List(testProbeBasicTimed.ref))
-    val sensorBasicTimedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorBasicTimed).behaviorWithTimer(FiniteDuration(2, "second")))
+    val sensorBasicTimedActor: ActorRef[DeviceMessage] = testKit.spawn(SensorActor(sensorBasicTimed).behaviorWithTimer(FiniteDuration(2, "second")))
 
     sensorBasicTimed.update(sensorBasicTimedActor, 5)
 
@@ -260,7 +260,7 @@ class SensorTest extends AnyFlatSpec:
   private def testBasicTimedSensorWrong(): Unit =
     val testProbeBasicTimed: TestProbe[Message] = testKit.createTestProbe[Message]()
     val sensorBasicTimed = new BasicSensor[Int]("1", List(testProbeBasicTimed.ref))
-    val sensorBasicTimedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorBasicTimed).behaviorWithTimer(FiniteDuration(2, "second")))
+    val sensorBasicTimedActor: ActorRef[DeviceMessage] = testKit.spawn(SensorActor(sensorBasicTimed).behaviorWithTimer(FiniteDuration(2, "second")))
 
     assertTypeError("sensorBasicTimed.update(sensorBasicTimedActor, 0.1)")
 
@@ -274,7 +274,7 @@ class SensorTest extends AnyFlatSpec:
   private def testProcessedTimedSensorCorrect(): Unit =
     val testProbeProcessedTimed: TestProbe[Message] = testKit.createTestProbe[Message]()
     val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toInt)
-    val sensorProcessedTimedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedTimed).behaviorWithTimer(FiniteDuration(2, "second")))
+    val sensorProcessedTimedActor: ActorRef[DeviceMessage] = testKit.spawn(SensorActor(sensorProcessedTimed).behaviorWithTimer(FiniteDuration(2, "second")))
 
     sensorProcessedTimed.update(sensorProcessedTimedActor, "2")
 
@@ -287,7 +287,7 @@ class SensorTest extends AnyFlatSpec:
   private def testProcessedTimedSensorWrong(): Unit =
     val testProbeProcessedTimed: TestProbe[Message] = testKit.createTestProbe[Message]()
     val sensorProcessedTimed = new ProcessedDataSensor[String, Int]("1", List(testProbeProcessedTimed.ref), x => x.toInt)
-    val sensorProcessedTimedActor: ActorRef[Message] = testKit.spawn(SensorActor(sensorProcessedTimed).behaviorWithTimer(FiniteDuration(2, "second")))
+    val sensorProcessedTimedActor: ActorRef[DeviceMessage] = testKit.spawn(SensorActor(sensorProcessedTimed).behaviorWithTimer(FiniteDuration(2, "second")))
 
     assertTypeError("sensorProcessedTime.update(sensorProcessedTimedActor, 0.1)")
 

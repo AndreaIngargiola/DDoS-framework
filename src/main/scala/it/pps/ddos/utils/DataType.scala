@@ -22,4 +22,4 @@ object GivenDataType:
     override def defaultValue: String = ""
 
   given AnyDataType: DataType[Any] with
-    override def defaultValue: Option[Any] = None
+    override def defaultValue: Any = None

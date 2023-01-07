@@ -1,7 +1,8 @@
 package it.pps.ddos.grouping
 
+import akka.actor.typed.ActorRef
 import it.pps.ddos.device.Device
-import it.pps.ddos.device.DeviceProtocol.Statuses
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, Statuses}
 
 import scala.collection.immutable.List
 
@@ -17,7 +18,7 @@ class ReduceGroup[I, O](id: String, sources: ActorList, destinations: ActorList,
 
 private trait MultipleOutputs[O]:
   self: Device[List[O]] =>
-  override def propagate(selfId: Actor, requester: Actor): Unit = status match
+  override def propagate(selfId: ActorRef[DeviceMessage], requester: ActorRef[DeviceMessage]): Unit = status match
     case Some(value) => for (actor <- destinations) actor ! Statuses[O](selfId, value)
     case None =>
 

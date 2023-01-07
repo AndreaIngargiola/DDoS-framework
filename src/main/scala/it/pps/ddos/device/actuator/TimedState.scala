@@ -12,11 +12,11 @@ type Sender[T] = () => (T, Seq[T])
 
 class TimedState[T] (name: String, timer: FiniteDuration, senderFunction: Sender[T]) extends State[T](name), LateInit:
 
-    var actuator: Option[ActorRef[Message]] = None
+    var actuator: Option[ActorRef[_ >: ActuatorMessage]] = None
     lazy val behavior: Behavior[Message] = Behaviors.withTimers(timers => idle(timers, timer))
 
-    private def idle(timers: TimerScheduler[Message],
-                     after: FiniteDuration): Behavior[Message] = Behaviors.receiveMessage[Message]{ msg =>
+    private def idle[M >: ActuatorMessage](timers: TimerScheduler[M],
+                     after: FiniteDuration): Behavior[M] = Behaviors.receiveMessage[M]{ msg =>
             timers.startSingleTimer(TimerKey, Timeout(), after)
             msg match
                 case SetActuatorRef(ref) =>
@@ -24,8 +24,8 @@ class TimedState[T] (name: String, timer: FiniteDuration, senderFunction: Sender
             active(timers, after)
         }
 
-    private def active(timers: TimerScheduler[Message], after: FiniteDuration): Behavior[Message] =
-        Behaviors.receiveMessage[Message] { msg =>
+    private def active[M >: ActuatorMessage](timers: TimerScheduler[M], after: FiniteDuration): Behavior[M] =
+        Behaviors.receiveMessage[M] { msg =>
             msg match
                 case Timeout() =>
                     val (msg, args) = senderFunction() //TODO Handle args?
