@@ -1,5 +1,6 @@
 package it.pps.ddos.grouping.tagging
 
+import scala.annotation.targetName
 import scala.collection.immutable.List
 import scala.util.Try
 
@@ -19,6 +20,7 @@ trait Taggable:
    * @param newTags are the tags to which mark this object.
    * @return Success or Failure for debug pourposes.
    */
+  @targetName("markWithTags")
   def ##(newTags: Tag[_,_]*): Try[Unit] = Try { for (t <- newTags) yield addTag(t) }
 
   /**
