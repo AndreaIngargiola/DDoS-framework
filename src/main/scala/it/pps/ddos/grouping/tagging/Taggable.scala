@@ -1,6 +1,6 @@
 package it.pps.ddos.grouping.tagging
 
-import scala.annotation.targetName
+import scala.annotation.{tailrec, targetName}
 import scala.collection.immutable.List
 import scala.util.Try
 
@@ -10,10 +10,16 @@ import scala.util.Try
 trait Taggable:
   private var tags: List[Tag[_,_]] = List.empty
 
-  private def addTag(t: Tag[_,_]): Unit =
+  private def checkCircularNesting(t: Tag[_,_]): Unit =
     t.getTags().contains(this) match
-      case false => tags = tags ++ List(t)
+      case false => for innerTag <- t.getTags() yield checkCircularNesting(innerTag)
       case true => throw IllegalArgumentException("circular tag nesting detected")
+
+  private def addTag(t: Tag[_,_]): Unit =
+    try
+      checkCircularNesting(t)
+      tags = tags ++ List(t)
+    catch case e: IllegalArgumentException => throw e
 
   /**
    * Add input tags to this object, making it a future source for the Group instances that they will generate.

@@ -72,10 +72,13 @@ class TagTest extends AnyFlatSpec:
   private def testNestedTag(): Unit =
     val tag1 =  tagging.Tag[String, String]("1", List.empty, s => s, TriggerMode.BLOCKING)
     val tag2 =  tagging.Tag[String, String]("2", List.empty, s => s, TriggerMode.BLOCKING)
+    val tag3 =  tagging.Tag[String, String]("3", List.empty, s => s, TriggerMode.BLOCKING)
     tag1 ## tag2
+    tag2 ## tag3
+    tag3 ## tag1 //should not work
     assert(tag1.getTags() == List(tag2))
     val thrown = intercept[IllegalArgumentException] {
-      val ex = tag2 ## tag1
+      val ex = tag3 ## tag1
       if ex.isFailure then throw ex.failed.get
     }
 
