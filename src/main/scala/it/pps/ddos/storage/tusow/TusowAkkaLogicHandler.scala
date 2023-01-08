@@ -8,15 +8,15 @@ import it.unibo.coordination.tusow.grpc
 import it.unibo.coordination.tusow.grpc.{IOResponse, IOResponseList, ReadOrTakeAllRequest, ReadOrTakeRequest, Template, Tuple, TupleSpaceID, TuplesList, TusowService, WriteAllRequest, WriteRequest}
 import it.unibo.tuprolog.core.Term
 
-import java.util.concurrent.CompletableFuture
-import scala.compat.java8.FutureConverters._
+import scala.compat.java8.FutureConverters.*
 import scala.concurrent.{Await, Future}
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.duration.DurationInt
+import scala.concurrent.duration.{DurationInt, TimeUnit}
+
+import java.util.concurrent.{CompletableFuture, TimeUnit}
 
 object TusowAkkaLogicHandler:
     def apply(): TusowAkkaLogicHandler = new TusowAkkaLogicHandler()
-
 
 class TusowAkkaLogicHandler extends TusowService:
 
@@ -30,19 +30,9 @@ class TusowAkkaLogicHandler extends TusowService:
         logicSpaces(in.id) = LogicSpace.local(in.id)
         Future.successful(IOResponse(response = true))
 
-    private def handleFutureRequest[A](space: LogicSpace)(failureHandler: () => Future[A])(successHandler: () => Future[A]): Future[A] =
-        if (space == null)
-            failureHandler()
-        else
-            successHandler()
-
     override def write(in: WriteRequest): Future[IOResponse] =
         val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
         handleFutureRequest(space)(() => Future.successful(IOResponse(response = false, message = "Tuple space not found")))(() => space.write(in.tuple.get.value).toScala.map(f => IOResponse(response = true, message = f.toString)))
-
-    private def handleReadOrTakeRequest[A](in: ReadOrTakeRequest)(readOrTake: (LogicSpace, String, Long) => Future[A]): Future[A] =
-        val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
-        handleFutureRequest(space)(() => Future.failed(new IllegalArgumentException("Tuple space not found")))(() => readOrTake(space, in.template.logicTemplate.getOrElse(Template.Logic.of("")).query, timeout))
 
     override def read(in: ReadOrTakeRequest): Future[Tuple] =
         val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
@@ -58,64 +48,66 @@ class TusowAkkaLogicHandler extends TusowService:
 
     override def writeAll(in: WriteAllRequest): Future[IOResponseList] =
         val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
-        if (space == null)
-            Future.successful(null)
-        else
+        handleFutureRequest(space)(() => Future.failed(new IllegalArgumentException("Tuple space does not exist")))(() =>
             val futures = in.tuplesList.get.tuples.map(t => space.write(t.value))
-            var ioResponseList = scala.Seq[IOResponse]()
             TusowGRPCCommons.processWriteAllFutures(futures)(f => f.getValue.toString)
+        )
 
     override def readAll(in: ReadOrTakeAllRequest): Future[TuplesList] =
         val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
-        if (space == null)
-            Future.successful(null)
-        else
-            val futures = in.templates.logicTemplateList.get.queries.map(t => space.read(t.query))
-            var tuplesList = scala.Seq[Tuple]()
-            futures.foldLeft(CompletableFuture.allOf(futures.head))(CompletableFuture.allOf(_, _)).toScala.map(_ =>
-                futures.foreach(f =>
-                    tuplesList = tuplesList :+ Tuple(f.get().getTemplate.toString, f.get().getTuple.get().getValue.toString)
-                )
-                TuplesList(tuplesList)
-            )
-
+        handleReadOrTakeAllRequest(in)((space, templates, timeout) =>
+            val futures = templates.map(space.read(_).orTimeout(timeout, TimeUnit.SECONDS))
+            processReadOrTakeAllFutures(futures)
+        )
 
     override def takeAll(in: ReadOrTakeAllRequest): Future[TuplesList] =
         val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
-        if (space == null)
-            Future.successful(null)
-        else
-            val futures = in.templates.logicTemplateList.get.queries.map(t => space.take(t.query))
-            var tuplesList = scala.Seq[Tuple]()
-            futures.foldLeft(CompletableFuture.allOf(futures.head))(CompletableFuture.allOf(_, _)).toScala.map(_ =>
-                futures.foreach(f =>
-                    tuplesList = tuplesList :+ Tuple(f.get().getTemplate.toString, f.get().getTuple.get().getValue.toString)
-                )
-                TuplesList(tuplesList)
-            )
+        handleReadOrTakeAllRequest(in)((space, templates, timeout) =>
+            val futures = templates.map(space.take(_).orTimeout(timeout, TimeUnit.SECONDS))
+            processReadOrTakeAllFutures(futures)
+        )
 
     override def writeAllAsStream(in: WriteAllRequest): Source[IOResponse, NotUsed] =
         logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id) match
             case null => Source.empty
             case space@_ =>
                 val futures = in.tuplesList.get.tuples.map(t => space.write(t.value))
-                futures.foldLeft(CompletableFuture.allOf(futures.head))(CompletableFuture.allOf(_, _)).get()
-                val result: Seq[LogicTuple] = Await.result(Future.sequence(futures.map(_.toScala)), Int.MaxValue.seconds)
-                val iterable = result.map(f => IOResponse(response = true, message = f.getValue.toString))
-                Source.apply[IOResponse](scala.collection.immutable.Iterable[IOResponse](iterable: _*))
+                TusowGRPCCommons.joinFutures(futures)
+                Source(futures.map(f => IOResponse(response = true, message = f.get.toString)).toList)
 
     override def readAllAsStream(in: ReadOrTakeAllRequest): Source[Tuple, NotUsed] =
         logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id) match
             case null => Source.empty
             case space@_ =>
                 val futures = in.templates.logicTemplateList.get.queries.map(t => space.read(t.query))
-                TusowGRPCCommons.joinFutures(futures)
-                Source(futures.map(f => Tuple(f.get().getTemplate.toString, f.get().getTuple.get().getValue.toString)).toList)
+                processStreamFutures(futures)
 
     override def takeAllAsStream(in: ReadOrTakeAllRequest): Source[Tuple, NotUsed] =
         logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id) match
             case null => Source.empty
             case space@_ =>
                 val futures = in.templates.logicTemplateList.get.queries.map(t => space.take(t.query))
-                TusowGRPCCommons.joinFutures(futures)
-                Source(futures.map(f => Tuple(f.get().getTemplate.toString, f.get().getTuple.get().getValue.toString)).toList)
+                processStreamFutures(futures)
+
+    private def processStreamFutures(futures: Seq[CompletableFuture[LogicMatch]]): Source[Tuple, NotUsed] =
+        TusowGRPCCommons.joinFutures(futures)
+        Source(futures.map(f => Tuple(f.get().getTemplate.toString, f.get().getTuple.get().toString)).toList)
+
+    private def handleReadOrTakeAllRequest[A](in: ReadOrTakeAllRequest)(readOrTake: (LogicSpace, Seq[String], Long) => Future[A]): Future[A] =
+        val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
+        handleFutureRequest(space)(() => Future.failed(new IllegalArgumentException("Tuple space does not exist")))(() =>
+            readOrTake(space, in.templates.logicTemplateList.get.queries.map(query => query.query), timeout)
+        )
+
+    private def processReadOrTakeAllFutures(futures: Seq[CompletableFuture[LogicMatch]]): Future[TuplesList] =
+        TusowGRPCCommons.processReadOrTakeAllFutures(futures)(f => Tuple(f.getTemplate.toString, f.getTuple.get().toString))
+
+    private def handleFutureRequest[A](space: LogicSpace)(failureHandler: () => Future[A])(successHandler: () => Future[A]): Future[A] =
+        if (space == null)
+            failureHandler()
+        else
+            successHandler()
+
+    private def handleReadOrTakeRequest[A](in: ReadOrTakeRequest)(readOrTake: (LogicSpace, String, Long) => Future[A]): Future[A] =
+        val space = logicSpaces(in.tupleSpaceID.getOrElse(TupleSpaceID("")).id)
+        handleFutureRequest(space)(() => Future.failed(new IllegalArgumentException("Tuple space not found")))(() => readOrTake(space, in.template.logicTemplate.getOrElse(Template.Logic.of("")).query, timeout))
