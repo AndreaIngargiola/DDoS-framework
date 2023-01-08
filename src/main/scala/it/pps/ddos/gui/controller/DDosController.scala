@@ -7,7 +7,7 @@ import akka.actor.typed.{ActorRef, ActorSystem}
 import com.typesafe.config.{Config, ConfigFactory}
 import it.pps.ddos.deployment.Deployer
 import it.pps.ddos.deployment.graph.Graph
-import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, Status}
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, Status, Statuses, SubscribeAck}
 import it.pps.ddos.device.sensor.BasicSensor
 import it.pps.ddos.device.{Device, DeviceProtocol, Public, Timer}
 import it.pps.ddos.storage.tusow.Server
@@ -26,7 +26,7 @@ class DDosController():
 
   private var listOfRef: List[ActorRef[DeviceMessage]] = List.empty[ActorRef[DeviceMessage]]
   private var listOfMsg: List[String] = List.empty[String]
-  private var guiActor: Option[ActorRef[Message]] = None
+  private var listOfGroupsMsg: List[String] = List.empty[String]
   private val key = ServiceKey[DeviceMessage]("DeviceService")
 
   def start(): Unit =
@@ -38,6 +38,10 @@ class DDosController():
         context.system.receptionist ! Receptionist.Subscribe(key, context.self)
         Behaviors.receiveMessage { msg =>
           msg match
+            case Statuses(ref, value) =>
+              //println("Received " + value + " from " + ref)
+              listOfGroupsMsg = String.valueOf("Receive AggregateStatuses from GROUP-"+ ref.path.name+" : " + value + " at " + DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss").format(LocalDateTime.now)) :: listOfGroupsMsg
+              Behaviors.same
             case Status(ref, value) =>
               //println("Received " + value + " from " + ref)
               listOfMsg = String.valueOf("Received value:  " + value + " from " + ref + " at " + DateTimeFormatter.ofPattern("dd-MM-yy HH:mm:ss").format(LocalDateTime.now)) :: listOfMsg
@@ -51,11 +55,17 @@ class DDosController():
                   case _ =>
               }
               Behaviors.same
+            case SubscribeAck(ref) =>
+              println("Subscribed to " + ref)
+              Behaviors.same
             case _ => Behaviors.same
         }
     },"GUIActor")
   def getMsgHistory: List[String] = listOfMsg
 
   def getListOfRef: List[ActorRef[DeviceMessage]] = listOfRef
+
+  def getListOfGroups: List[String] = listOfGroupsMsg
+
 
 

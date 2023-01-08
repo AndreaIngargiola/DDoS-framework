@@ -10,7 +10,13 @@ object DeviceBehavior:
    * declaration of the the private message for the timed actor
    */
   private[device] case object Tick extends DeviceMessage
-
+  
+  /**
+   * definition of the basic behavior 
+   * @param device the device
+   * @param ctx the context of the actor
+   * @return a partial function that represents the behavior
+   */
   def getBasicBehavior[T](device: Device[T], ctx: ActorContext[DeviceMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
     case PropagateStatus(requesterRef: ActorRef[DeviceMessage]) =>
       device.propagate(ctx.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
@@ -22,6 +28,12 @@ object DeviceBehavior:
       device.unsubscribe(ctx.self, replyTo)
       Behaviors.same
 
+  /**
+   * definition of the timed behavior
+   * @param device the device
+   * @param ctx the context of the actor
+   * @return a partial function that define the behavior of the actor
+   */
   def getTimedBehavior[T](device: Device[T], ctx: ActorContext[DeviceMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
     case Tick =>
       device.propagate(ctx.self, ctx.self)

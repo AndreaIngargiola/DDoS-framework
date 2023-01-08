@@ -6,13 +6,15 @@ import com.typesafe.config.{Config, ConfigFactory}
 import it.pps.ddos.deployment.Deployer
 import it.pps.ddos.deployment.graph.Graph
 import it.pps.ddos.device.{Device, Public, Timer}
-import it.pps.ddos.utils.GivenDataType.given
+import it.pps.ddos.utils.GivenDataType.{IntDataType, *}
+import it.pps.ddos.utils.DataType
 import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, Status, Statuses, UpdateStatus}
-import it.pps.ddos.device.sensor.BasicSensor
+import it.pps.ddos.device.sensor.{BasicSensor, Condition, ProcessedDataSensor}
 import it.pps.ddos.grouping.tagging
 import it.pps.ddos.grouping.tagging.TriggerMode
 import it.pps.ddos.gui.view.DDosGUI
 import it.pps.ddos.storage.tusow.{Server, TusowBinder}
+import it.pps.ddos.utils.GivenDataType.given
 import javafx.application.Application
 import javafx.embed.swing.JFXPanel
 import org.agrona.concurrent.status.StatusIndicatorReader
@@ -36,35 +38,71 @@ object Main {
   private def updateDeviceStatus(): Unit =
     val actorMap = Deployer.getDevicesActorRefMap
     for i <- 1 to 100 do
-      actorMap.foreach((device, actorRef) => actorRef ! UpdateStatus((Math.random()*100).toInt))
+      actorMap.foreach((device, actorRef) => actorRef ! UpdateStatus((Math.random() * 100).toInt.toString))
       Thread.sleep(5000)
       println(Deployer.getDevicesActorRefMap)
 
   private def setupDeployer(): Unit =
     Deployer.initSeedNodes()
     Deployer.addNodes(5)
-    executeParallelTask(Deployer.deploy(createSensors()))
-    Thread.sleep(2000)
+    Deployer.deploy(createSomeStringSensors())
+    Thread.sleep(10000)
+    Deployer.deploy(createSomeStringToIntSensors())
+    Thread.sleep(10000)
+    println(Deployer.getDevicesActorRefMap)
 
-  private def createSensors(): Graph[Device[String]] =
-    val addNumber = tagging.Tag[String, String]("tag2", List.empty, "1 " + _, TriggerMode.BLOCKING)
-    val addNumber2 = tagging.Tag[String, String]("tag3", List.empty, "2 " + _, TriggerMode.BLOCKING)
-    val addNumber3 = tagging.Tag[String, String]("tag4", List.empty, "3 " + _, TriggerMode.BLOCKING)
-    val addNumber4 = tagging.Tag[String, String]("tag5", List.empty, "4 " + _, TriggerMode.BLOCKING)
-    val basic1 = new BasicSensor[String]("0", List.empty) with Public[String] with Timer(Duration(10, "second"))
-    val basic2 = new BasicSensor[String]("1", List.empty) with Public[String] with Timer(Duration(10, "second"))
+  private def createSomeStringSensors(): Graph[Device[String]] =
+    val basic1 = new MyBasicCustomSensor("0")
+    val basic2 = new MyBasicCustomSensor("1")
 
-    addNumber ## addNumber2
-    addNumber2 ## addNumber3
-    addNumber3 ## addNumber4
-    addNumber4 ## addNumber
-    basic1 ## addNumber
-    basic2 ## addNumber2
+    val concatString1 = tagging.Tag[String, String]("tag1", List.empty, _ + "ciao ", TriggerMode.BLOCKING)
+    val concatString2 = tagging.Tag[String, String]("tag2", List.empty, _ + "dal ", TriggerMode.BLOCKING)
+    val concatString3 = tagging.Tag[String, String]("tag3", List.empty, _ + "team DDOS ", TriggerMode.BLOCKING)
+
+    concatString1 ## concatString2
+    concatString2 ## concatString3
+    
+    basic1 ## concatString1
+    
+    basic2 ## concatString3
 
     val graph = Graph[Device[String]](
-      basic1 -> basic2,
-      basic2 -> basic1,
+      basic1 -> basic1,
+      basic2 -> basic2,
+    )
+    graph
+
+  private def createSomeStringToIntSensors(): Graph[Device[Int]] =
+    val basic1 = new MyProcessedDataCustomSensor2("2")
+    val basic2 = new MyProcessedDataCustomSensor2("3")
+
+    val addNumber1 = tagging.Tag[Int,String]("tag4", List.empty, _+1.toString, TriggerMode.BLOCKING)
+    val multiplyBy2 = tagging.Tag[String, Int]("tag5", List.empty, _.toInt * 2, TriggerMode.BLOCKING)
+    val divideBy3 = tagging.Tag[Int, Int]("tag6", List.empty, _ / 3, TriggerMode.BLOCKING)
+    val convertToFahrenheit = tagging.Tag[Int, Int]("tag7", List.empty, _ * 9 / 5 + 32, TriggerMode.BLOCKING)
+
+    addNumber1 ## multiplyBy2
+    multiplyBy2 ## divideBy3
+    basic1 ## addNumber1
+    basic2 ## convertToFahrenheit
+
+    addNumber1 <-- basic1
+    multiplyBy2 <-- basic2
+
+    val graph = Graph[Device[Int]](
+      basic1 -> basic1,
+      basic2 -> basic2,
     )
     graph
 
 }
+
+/**
+ * This class is a custom sensor that send his Status[String] every 5 seconds
+ */
+private class MyBasicCustomSensor(id: String) extends BasicSensor[String](id, List.empty) with Public[String] with Timer(Duration(5, "seconds"))
+
+/**
+ * This class is a custom sensor that send his processed Status every 5 seconds
+ */
+private class MyProcessedDataCustomSensor2(id: String) extends ProcessedDataSensor[String, Int](id, List.empty, x => x.toInt) with Public[Int] with Timer(Duration(5, "seconds"))

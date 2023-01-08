@@ -33,6 +33,7 @@ object DDosGUI extends JFXApp3:
 
   private val guiController = new DDosController()
 
+
   override def start(): Unit =
     guiController.start()
     createGUI(guiController)
@@ -57,9 +58,11 @@ object DDosGUI extends JFXApp3:
 
     updateButton.onAction = _ =>
       history.items = ObservableBuffer.from(guiController.getMsgHistory)
-      actorList.items = ObservableBuffer.from(guiController.getListOfRef.map("Device url: "+_.path))
+      actorList.items = ObservableBuffer.from(guiController.getListOfRef.map("Device : "+_.path))
+      actorGroups.items = ObservableBuffer.from(guiController.getListOfGroups)
 
     stage = new PrimaryStage:
       title = "DDos Demo"
       scene = sceneMain
+
 

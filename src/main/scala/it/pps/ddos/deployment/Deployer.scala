@@ -26,9 +26,7 @@ object Deployer:
   private case class InternSpawn(id: String, behavior: Behavior[_ <: Message])
 
   private val orderedActorSystemRefList = mutable.ListBuffer.empty[ActorSysWithActor]
-
-  private var cluster: Option[Cluster] = None
-
+  
   private var devicesActorRefMap = Map.empty[String, ActorRef[DeviceMessage]]
 
   private val deviceServiceKey = ServiceKey[DeviceMessage]("DeviceService")
@@ -66,6 +64,10 @@ object Deployer:
         }
     ), id, setupClusterConfig(DEFAULT_PORT))
 
+  /**
+   * Deploy the graph on the cluster
+   * @param graph the graph to deploy
+   */
   def deploy[T](devices: Device[T]*): Unit =
     devices.foreach(dev =>
       val actorRefWithInt = orderedActorSystemRefList.filter(_.actorSystem.ref == getMinSpawnActorNode).head
