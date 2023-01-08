@@ -53,15 +53,13 @@ object DDosGUI extends JFXApp3:
     root.setCenter(mainBox)
     root.setPadding(Insets(25))
 
-    val sceneMain: Scene = new Scene(root, 600, 500)
+    val sceneMain: Scene = new Scene(root, 1000, 800)
 
-    // Aggiunge un evento al bottone per aggiornare la ListView con la lista degli attori registrati nel cluster
     updateButton.onAction = _ =>
       history.items = ObservableBuffer.from(guiController.getMsgHistory)
       actorList.items = ObservableBuffer.from(guiController.getListOfRef.map("Device url: "+_.path))
 
-    // Imposta la finestra principale e avvia l'applicazione
     stage = new PrimaryStage:
-      title = "Actor List"
+      title = "DDos Demo"
       scene = sceneMain
 

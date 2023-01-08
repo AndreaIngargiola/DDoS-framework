@@ -40,8 +40,8 @@ object Deployer:
    * Initialize the seed nodes and the cluster
    */
   def initSeedNodes(): Unit =
-    ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2551"))
-    ActorSystem(Behaviors.empty, "ClusterSystem", setupClusterConfig("2552"))
+    ActorSystem(Behaviors.empty[DeviceMessage], "ClusterSystem", setupClusterConfig("2551"))
+    ActorSystem(Behaviors.empty[DeviceMessage], "ClusterSystem", setupClusterConfig("2552"))
 
   /**
    * Add N nodes to the cluster
