@@ -18,7 +18,7 @@ object SensorActor:
 
 class SensorActor[I: DataType, O: DataType](val sensor: Sensor[I, O]):
   private case object TimedSensorKey
-  private def getBasicSensorBehavior(ctx: ActorContext[SensorMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
+  private def getBasicSensorBehavior(ctx: ActorContext[DeviceMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
     case UpdateStatus[I](value) =>
       sensor.update(ctx.self, value)
       Behaviors.same
@@ -27,13 +27,13 @@ class SensorActor[I: DataType, O: DataType](val sensor: Sensor[I, O]):
     Behaviors.setup { context =>
       Behaviors.withTimers { timer =>
         timer.startTimerWithFixedDelay(TimedSensorKey, Tick, duration)
-        Behaviors.receiveMessagePartial(getBasicSensorBehavior(context.asInstanceOf[ActorContext[SensorMessage]])
+        Behaviors.receiveMessagePartial(getBasicSensorBehavior(context)
           .orElse(DeviceBehavior.getBasicBehavior(sensor, context))
           .orElse(DeviceBehavior.getTimedBehavior(sensor, context)))
       }
     }
 
   def behavior(): Behavior[DeviceMessage] = Behaviors.setup { context =>
-    Behaviors.receiveMessagePartial(getBasicSensorBehavior(context.asInstanceOf[ActorContext[SensorMessage]])
+    Behaviors.receiveMessagePartial(getBasicSensorBehavior(context)
       .orElse(DeviceBehavior.getBasicBehavior(sensor, context)))
   }
