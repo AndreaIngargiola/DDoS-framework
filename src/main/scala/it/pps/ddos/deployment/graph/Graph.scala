@@ -2,7 +2,7 @@ package it.pps.ddos.deployment.graph
 
 import akka.actor.typed
 import akka.actor.typed.Behavior
-import it.pps.ddos.device.actuator.{Actuator, Message}
+import it.pps.ddos.device.actuator.Actuator
 
 import scala.::
 import scala.annotation.targetName
