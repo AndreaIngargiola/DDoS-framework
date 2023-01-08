@@ -1,28 +1,28 @@
 package it.pps.ddos.device
 
-import akka.actor.typed.Behavior
+import akka.actor.typed.{ActorRef, Behavior}
 import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
-import it.pps.ddos.device.DeviceProtocol.{Message, PropagateStatus, Subscribe, Unsubscribe}
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, PropagateStatus, Subscribe, Unsubscribe}
 import it.pps.ddos.device.Device
 
 object DeviceBehavior:
   /**
    * declaration of the the private message for the timed actor
    */
-  private[device] case object Tick extends Message
+  private[device] case object Tick extends DeviceMessage
 
-  def getBasicBehavior[A](device: Device[A], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] =
-    case PropagateStatus(requesterRef) =>
+  def getBasicBehavior[T](device: Device[T], ctx: ActorContext[DeviceMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
+    case PropagateStatus(requesterRef: ActorRef[DeviceMessage]) =>
       device.propagate(ctx.self, requesterRef) // requesterRef is the actor that request the propagation, not the destination.
       Behaviors.same
-    case Subscribe(replyTo) =>
+    case Subscribe(replyTo: ActorRef[DeviceMessage]) =>
       device.subscribe(ctx.self, replyTo)
       Behaviors.same
-    case Unsubscribe(replyTo) =>
+    case Unsubscribe(replyTo: ActorRef[DeviceMessage]) =>
       device.unsubscribe(ctx.self, replyTo)
       Behaviors.same
 
-  def getTimedBehavior[A](device: Device[A], ctx: ActorContext[Message]): PartialFunction[Message, Behavior[Message]] =
+  def getTimedBehavior[T](device: Device[T], ctx: ActorContext[DeviceMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
     case Tick =>
       device.propagate(ctx.self, ctx.self)
       Behaviors.same

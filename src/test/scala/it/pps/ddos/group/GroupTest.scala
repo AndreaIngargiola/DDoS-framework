@@ -23,23 +23,22 @@ class GroupTest extends AnyFlatSpec:
   it should "be possible to update already stored values until computation is triggered" in testUpdatingValues()
   "A non-blocking group of devices" should "trigger its computation whenever a new value is received from the sources list" in testNonBlockingBehavior()
   "A ReduceGroup" should "reduce the whole list of values in an aggregated single value" in testReduce()
-  it should " " in test()
 
   val testKit: ActorTestKit = ActorTestKit()
 
-  private def preparePublicSensor(id: String): ActorRef[Message] =
+  private def preparePublicSensor(id: String): ActorRef[DeviceMessage] =
     class PublicSensor extends BasicSensor[String](id, List.empty) with Public[String]
     val sensor = testKit.spawn(SensorActor(new PublicSensor).behavior())
     sensor ! UpdateStatus("Status of sensor " + id)
     sensor
 
-  private def prepareDevicesList(lenght: Int): List[ActorRef[Message]] =
-    var sensors: List[ActorRef[Message]] = List.empty
+  private def prepareDevicesList(lenght: Int): List[ActorRef[DeviceMessage]] =
+    var sensors: List[ActorRef[DeviceMessage]] = List.empty
     for i <- 1 to lenght yield sensors = sensors ++ List(preparePublicSensor(i.toString))
     sensors
 
   private object Determinizer:
-    def apply(destination: ActorRef[Message]): Behavior[Message] =
+    def apply(destination: ActorRef[DeviceMessage]): Behavior[Message] =
       Behaviors.setup { ctx =>
         Behaviors.receivePartial { (ctx, message) =>
           message match
@@ -49,7 +48,7 @@ class GroupTest extends AnyFlatSpec:
         }
       }
 
-  private var sensors: List[ActorRef[Message]] = prepareDevicesList(3)
+  private var sensors: List[ActorRef[DeviceMessage]] = prepareDevicesList(3)
   private var testProbe = testKit.createTestProbe[Message]()
   private var determinizer = testKit.spawn(Determinizer(testProbe.ref))
 
@@ -68,7 +67,7 @@ class GroupTest extends AnyFlatSpec:
   private def testNestingGroups(): Unit =
     resetVariables()
     case class LabeledValue(val label: String, val value: String)
-    var sensors: List[ActorRef[Message]] = prepareDevicesList(3)
+    var sensors: List[ActorRef[DeviceMessage]] = prepareDevicesList(3)
 
     val labelAGroup = testKit.spawn(BlockingGroup(
       new MapGroup[String, LabeledValue]("id", List(sensors(0), sensors(2)), List.empty, f => LabeledValue("label-a", f.toUpperCase))
@@ -126,9 +125,3 @@ class GroupTest extends AnyFlatSpec:
     Thread.sleep(500)
     for s <- sensors yield s ! PropagateStatus(testProbe.ref); Thread.sleep(500)
     testProbe.expectMessage(Status(toUppercaseActor, " | status of sensor | status of sensor | status of sensor"))
-
-  private def test(): Unit =
-    val f = (a: String, b: Int) => a + " " + b.toString()
-    val l = List(1, 2, 3)
-    val res = l.foldLeft("")(f)
-    assert(res == " 1 2 3")
