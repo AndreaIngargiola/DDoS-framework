@@ -7,7 +7,7 @@ import com.typesafe.config.{Config, ConfigFactory}
 import it.pps.ddos.deployment.Deployer
 import it.pps.ddos.deployment.graph.Graph
 import it.pps.ddos.device.{Device, DeviceProtocol, Public, Timer}
-import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, PropagateStatus, Status, Subscribe}
+import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, PropagateStatus, Status, Statuses, Subscribe}
 import it.pps.ddos.device.sensor.BasicSensor
 import it.pps.ddos.storage.tusow.client.Client
 import it.unibo.coordination.tusow.grpc.{IOResponse, ReadOrTakeRequest, Template, Tuple, TupleSpaceID, TupleSpaceType, TusowServiceClient, WriteRequest}
@@ -24,7 +24,7 @@ object TusowBinder:
   private final val TUSOW_SYSTEM_NAME = "ddos-tusow-storage"
   private final val key = ServiceKey[DeviceMessage]("DeviceService")
   private final val STANDARD_WAIT = 2500
-
+  private var latestResponse: Option[IOResponse] = None
   /**
    * This method is used to create a new TusowBinder actor
    * @param sys the configuration of the actor system
@@ -44,8 +44,11 @@ object TusowBinder:
           msg match
             case Status(ref, value) =>
               val tuple = new Tuple(TUSOW_SYSTEM_NAME, s"data('${ref.toString}', '${value.toString}').")
-              val writeResponse = Await.result[IOResponse](client.write(new WriteRequest(Some(tupleSpace), Some(tuple))), Duration(STANDARD_WAIT, TimeUnit.MILLISECONDS))
-              println(writeResponse)
+              write(client,tuple,tupleSpace)
+              Behaviors.same
+            case Statuses(ref, value) =>
+              val tuple = new Tuple(TUSOW_SYSTEM_NAME, s"data('${ref.toString}', '${value.foreach(_.toString)}').")
+              write(client,tuple,tupleSpace)
               Behaviors.same
             case key.Listing(listings) =>
               for {act <- listings} yield {
@@ -61,7 +64,14 @@ object TusowBinder:
         }
       }), "TusowActor")
     )
-
+  
+  private def write(client: TusowServiceClient,tuple: Tuple,tupleSpace: TupleSpaceID): IOResponse =
+    val writeResponse = Await.result[IOResponse](client.write(new WriteRequest(Some(tupleSpace), Some(tuple))), Duration(STANDARD_WAIT, TimeUnit.MILLISECONDS))
+    latestResponse = Option.apply(writeResponse)
+    writeResponse
+  
+  def getLatestResponse: Option[IOResponse] = latestResponse
+  
 /* Runnable TusowBinder actor for debug */
 //object TusowBinderMain extends App:
 //TusowBinder()
