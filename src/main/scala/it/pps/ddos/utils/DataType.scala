@@ -1,13 +1,27 @@
 package it.pps.ddos.utils
 
+/**
+ * The typeclass: a T-generic trait defining operations over T
+ *
+ * @tparam T is a generic sensor data type
+ */
 trait DataType[T]:
-  // it's defined as a type-level method because we only need one instance
-  // of the value for all instances of a particular type T
+  /**
+   * Type-level method for having a single instance of a value for all instances of a particular type T
+   *
+   * @return
+   */
   def defaultValue: T
 
+/**
+ * The module with algorithms using DataType type-class
+ */
 object DataType:
   def defaultValue[T](using data: DataType[T]): T = data.defaultValue
 
+/**
+ * Implementations of DataType "context"
+ */
 object GivenDataType:
   given IntDataType: DataType[Int] with
     override def defaultValue: Int = 0

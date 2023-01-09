@@ -3,7 +3,10 @@ package it.pps.ddos.device
 import akka.actor.typed.ActorRef
 import scala.collection.immutable.List
 
-/* Definition of the message protocol shared by devices */
+
+/**
+ * Definition of the message protocol shared by devices
+ */
 object DeviceProtocol:
   trait Message
   trait DeviceMessage extends Message
@@ -16,19 +19,19 @@ object DeviceProtocol:
 
   case class Statuses[T](author: ActorRef[_ <: Message], value: List[T]) extends Output[List[T]](author, value)
 
-  case class PropagateStatus(requester: ActorRef[_ <: Message]) extends DeviceMessage
+  case class PropagateStatus[M <: Message](requester: ActorRef[M]) extends DeviceMessage
 
   case class UpdateStatus[T](value: T) extends SensorMessage
 
-  case class Subscribe(replyTo: ActorRef[_ <: Message]) extends DeviceMessage
+  case class Subscribe[M <: Message](replyTo: ActorRef[M]) extends DeviceMessage
 
-  case class SubscribeAck(author: ActorRef[_ <: Message]) extends DeviceMessage
+  case class SubscribeAck[M <: Message](author: ActorRef[M]) extends DeviceMessage
 
-  case class Unsubscribe(replyTo: ActorRef[_ <: Message]) extends DeviceMessage
+  case class Unsubscribe[M <: Message](replyTo: ActorRef[M]) extends DeviceMessage
 
-  case class UnsubscribeAck(author: ActorRef[_ <: Message]) extends DeviceMessage
+  case class UnsubscribeAck[M <: Message](author: ActorRef[M]) extends DeviceMessage
 
-  case class MessageWithReply[T](message: T, replyTo: ActorRef[_ >: ActuatorMessage], args: T*) extends ActuatorMessage
+  case class MessageWithReply[T](message: T, replyTo: ActorRef[_ >: ActuatorMessage <: Message], args: T*) extends ActuatorMessage
 
   case class MessageWithoutReply[T](message: T, args: T*) extends ActuatorMessage
 
@@ -38,7 +41,7 @@ object DeviceProtocol:
 
   case class Timeout() extends ActuatorMessage
 
-  case class SetActuatorRef(actuator: ActorRef[_ >: ActuatorMessage]) extends ActuatorMessage
+  case class SetActuatorRef[M >: ActuatorMessage <: Message](actuator: ActorRef[M]) extends ActuatorMessage
 
   case class Stop() extends ActuatorMessage
 

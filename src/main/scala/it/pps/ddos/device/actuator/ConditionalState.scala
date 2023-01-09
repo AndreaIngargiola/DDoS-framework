@@ -14,7 +14,7 @@ object ConditionalState {
 
 class ConditionalState[T](name: String, condFunction: ConditionalFunction[T]) extends State[T](name):
 
-    private val behavior: Behavior[Message] = Behaviors.receiveMessage[Message] { msg =>
+    private val behavior: Behavior[DeviceMessage] = Behaviors.receiveMessage[DeviceMessage] { msg =>
         msg match
             case MessageWithReply(msg: T, replyTo, args: _*) =>
                 if condFunction(msg, args.asInstanceOf[Seq[T]]) then
@@ -25,6 +25,6 @@ class ConditionalState[T](name: String, condFunction: ConditionalFunction[T]) ex
         Behaviors.same
     }
 
-    override def getBehavior: Behavior[Message] = behavior
+    override def getBehavior: Behavior[DeviceMessage] = behavior
 
     override def copy(): State[T] = ConditionalState(name, condFunction)

@@ -16,7 +16,7 @@ class FSMTest extends AnyFlatSpec:
 
   private class FSMState(name: String) extends State[String](name):
     override def copy(): FSMState = new FSMState(name)
-    override def getBehavior: Behavior[Message] = Behaviors.empty
+    override def getBehavior: Behavior[DeviceMessage] = Behaviors.empty
 
   private def testDSLPartialCreation(): Unit =
     val A: FSMState = new FSMState("A")
