@@ -1,8 +1,11 @@
 package it.pps.ddos.utils
 
 trait DataType[T]:
-  // it's defined as a type-level method because we only need one instance
-  // of the value for all instances of a particular type T
+  /**
+   * Type-level method for having a single instance of a value for all instances of a particular type T
+   *
+   * @return
+   */
   def defaultValue: T
 
 object DataType:
