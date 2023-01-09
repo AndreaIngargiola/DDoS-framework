@@ -1,5 +1,7 @@
 package it.pps.ddos.utils
 
+import scala.collection.mutable
+
 /**
  * The typeclass: a T-generic trait defining operations over T
  *
@@ -40,3 +42,6 @@ object GivenDataType:
 
   given AnyDataType: DataType[Any] with
     override def defaultValue: Any = None
+    
+  given HashMapDataType: DataType[mutable.HashMap[Any,Any]] with
+    override def defaultValue: mutable.HashMap[Any,Any] = mutable.HashMap.empty
