@@ -12,9 +12,11 @@ import it.pps.ddos.grouping.tagging.Taggable
 import scala.collection.immutable.List
 import scala.concurrent.duration.FiniteDuration
 
-/*
-* Abstract definition of device
-* */
+/**
+ * Abstract definition of device
+ * 
+ * @tparam T is the device type
+ */
 trait Device[T](val id: String, protected var destinations: List[ActorRef[DeviceMessage]]) extends Taggable:
   protected var status: Option[T] = None
   def propagate(selfId: ActorRef[DeviceMessage], requester: ActorRef[DeviceMessage]): Unit =
@@ -25,9 +27,9 @@ trait Device[T](val id: String, protected var destinations: List[ActorRef[Device
   def unsubscribe(selfId: ActorRef[DeviceMessage], toUnsubscribe: ActorRef[DeviceMessage]): Unit = ()
   def behavior(): Behavior[DeviceMessage]
 
-/*
-* Abstract definition of device modules
-* */
+/**
+ * Abstract definition of the Timer device module: it enables a timed sensor.
+ */
 trait Timer(val duration: FiniteDuration):
   self: Device[_] =>
   override def behavior(): Behavior[DeviceMessage] = this match

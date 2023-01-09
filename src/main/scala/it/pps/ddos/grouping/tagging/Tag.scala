@@ -2,9 +2,9 @@ package it.pps.ddos.grouping.tagging
 
 import akka.actor.typed.ActorRef
 import it.pps.ddos.device.DeviceProtocol.Message
-
 import it.pps.ddos.grouping.*
 
+import scala.annotation.targetName
 import scala.collection.immutable.List
 import scala.util.Try
 
@@ -19,6 +19,7 @@ abstract class Tag[I,O](val id: String) extends Taggable:
    * Assign to each Taggable in input this Tag.
    * @param toTag is a Taggable element to which assign this Tag.
    */
+  @targetName("addTagToDevices")
   def <--(toTag: Taggable*): Unit = for (taggable <- toTag) yield taggable ## this
 
   /**

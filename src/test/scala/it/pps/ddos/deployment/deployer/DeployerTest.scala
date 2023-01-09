@@ -34,10 +34,9 @@ class DeployerTest extends AnyFlatSpec:
       basic1 -> basic2,
       basic1 -> basic3,
       basic2 -> basic4,
-      basic3 -> basic1
+      basic3 -> basic2,
     )
     graph.size must be(3)
-    println(graph)
     graph
 
   private def createTestBasicStateFSM(): FSM[String] =
@@ -72,7 +71,6 @@ class DeployerTest extends AnyFlatSpec:
       a1 -> a2,
       a1 -> a3,
       a2 -> a4,
-      a3 -> a1
     )
     println(graph)
     Deployer.deploy(graph)

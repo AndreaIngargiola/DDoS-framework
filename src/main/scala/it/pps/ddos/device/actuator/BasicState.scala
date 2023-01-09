@@ -11,7 +11,7 @@ object BasicState:
     def apply[T](name: String): BasicState[T] = new BasicState(name)
 
 class BasicState[T](name: String) extends State[T](name):
-    private val behavior: Behavior[Message] = Behaviors.receiveMessage[Message] { msg =>
+    private val behavior: Behavior[DeviceMessage] = Behaviors.receiveMessage[DeviceMessage] { msg =>
         msg match
             case MessageWithReply(msg: T, replyTo, args: _*) =>
                 replyTo ! Approved()
@@ -20,6 +20,6 @@ class BasicState[T](name: String) extends State[T](name):
             case _ => Behaviors.same
     }
 
-    override def getBehavior: Behavior[Message] = behavior
+    override def getBehavior: Behavior[DeviceMessage] = behavior
 
     override def copy(): State[T] = BasicState[T](name)

@@ -5,11 +5,13 @@ import it.pps.ddos.deployment.Deployer
 import it.pps.ddos.storage.tusow.TusowLogicHandlerTest.tupleSpace
 import it.pps.ddos.storage.tusow.client.Client
 import it.unibo.coordination.tusow.grpc.{IOResponse, ReadOrTakeRequest, Template, Tuple, TupleSpaceID, TupleSpaceType, TusowServiceClient, WriteRequest}
+import org.scalatest.compatible.Assertion
 import org.scalatest.flatspec.AnyFlatSpec
 
-import java.util.concurrent.TimeUnit
 import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
+
+import java.util.concurrent.TimeUnit
 
 object TusowLogicHandlerTest:
     implicit val duration: Duration = Duration(5000, TimeUnit.MILLISECONDS)
@@ -50,7 +52,7 @@ class TusowLogicHandlerTest extends AnyFlatSpec:
         assert(response.response)
     }
 
-    it should "read a tuple" in {
+    def readTest(): Assertion =
         initTusowServer()
         implicit val sys: ActorSystem = ActorSystem("TestSystem")
         implicit val ec: ExecutionContextExecutor = sys.dispatcher
@@ -66,7 +68,6 @@ class TusowLogicHandlerTest extends AnyFlatSpec:
         val readResponse = Await.result[Tuple](client.read(new ReadOrTakeRequest(Some(tupleSpace), readOrTakeRequestTemplate)), Duration(5000, TimeUnit.MILLISECONDS))
         println(readResponse.value)
         assert(readResponse.value == tuple.value)
-    }
 
 private def initTusowServer(): Unit =
     Deployer.initSeedNodes()

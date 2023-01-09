@@ -5,14 +5,22 @@ import akka.actor.typed.scaladsl.{ActorContext, Behaviors}
 import it.pps.ddos.device.DeviceProtocol.{DeviceMessage, Message, PropagateStatus, Subscribe, Unsubscribe}
 import it.pps.ddos.device.Device
 
+/**
+ * Actor behavior definition of a device
+ */
 object DeviceBehavior:
   /**
-   * declaration of the the private message for the timed actor
+   * The basic actor behavior definition of a device
+   *
+   * @param device
+   * @param ctx the device actor context
+   * @tparam T is the device type
+   * @return PartialFunction[DeviceMessage, Behavior[DeviceMessage]]
    */
   private[device] case object Tick extends DeviceMessage
-  
+
   /**
-   * definition of the basic behavior 
+   * definition of the basic behavior
    * @param device the device
    * @param ctx the context of the actor
    * @return a partial function that represents the behavior
@@ -29,10 +37,12 @@ object DeviceBehavior:
       Behaviors.same
 
   /**
-   * definition of the timed behavior
-   * @param device the device
-   * @param ctx the context of the actor
-   * @return a partial function that define the behavior of the actor
+   * The timed actor behavior definition of a device
+   *
+   * @param device
+   * @param ctx the device actor context
+   * @tparam T is the device type
+   * @return PartialFunction[DeviceMessage, Behavior[DeviceMessage]]
    */
   def getTimedBehavior[T](device: Device[T], ctx: ActorContext[DeviceMessage]): PartialFunction[DeviceMessage, Behavior[DeviceMessage]] =
     case Tick =>

@@ -22,7 +22,6 @@ import scala.util.Try
 import it.pps.ddos.device
 import it.pps.ddos.grouping.tagging.{MapTag, Tag, Taggable, TriggerMode}
 
-
 class TagTest extends AnyFlatSpec:
   "A Tag" should "register itself in any object that extends the Taggable trait" in testBasicTag()
   it should "be taggable itself, but cannot be used to create a circular tagging" in testNestedTag()
@@ -73,10 +72,13 @@ class TagTest extends AnyFlatSpec:
   private def testNestedTag(): Unit =
     val tag1 =  tagging.Tag[String, String]("1", List.empty, s => s, TriggerMode.BLOCKING)
     val tag2 =  tagging.Tag[String, String]("2", List.empty, s => s, TriggerMode.BLOCKING)
+    val tag3 =  tagging.Tag[String, String]("3", List.empty, s => s, TriggerMode.BLOCKING)
     tag1 ## tag2
+    tag2 ## tag3
+    tag3 ## tag1 //should not work
     assert(tag1.getTags() == List(tag2))
     val thrown = intercept[IllegalArgumentException] {
-      val ex = tag2 ## tag1
+      val ex = tag3 ## tag1
       if ex.isFailure then throw ex.failed.get
     }
 
@@ -118,11 +120,11 @@ class TagTest extends AnyFlatSpec:
     Deployer.addNodes(1)
     Thread.sleep(500)
     val graph = Graph[Device[String]](
-      sensorA -> sensorB,
-      sensorB -> sensorA,
+      sensorA -> sensorA,
+      sensorB -> sensorB,
     )
     Deployer.deploy(graph)
-    Thread.sleep(500)
+    Thread.sleep(10000)
     val actorMap = Deployer.getDevicesActorRefMap
     actorMap("a") ! UpdateStatus("a")
     actorMap("b") ! UpdateStatus("b")
