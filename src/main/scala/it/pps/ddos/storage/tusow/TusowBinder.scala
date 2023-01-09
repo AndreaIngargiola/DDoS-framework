@@ -20,6 +20,9 @@ import scala.collection.mutable.*
 import scala.concurrent.{Await, ExecutionContextExecutor, Future}
 import scala.concurrent.duration.Duration
 
+/**
+ * Actor that allows sensor data of an ActorSystem to be stored in a distributed manner via tuple spaces
+ */
 object TusowBinder:
   private final val TUSOW_SYSTEM_NAME = "ddos-tusow-storage"
   private final val key = ServiceKey[DeviceMessage]("DeviceService")

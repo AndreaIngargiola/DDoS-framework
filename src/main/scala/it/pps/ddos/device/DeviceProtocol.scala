@@ -3,7 +3,10 @@ package it.pps.ddos.device
 import akka.actor.typed.ActorRef
 import scala.collection.immutable.List
 
-/* Definition of the message protocol shared by devices */
+
+/**
+ * Definition of the message protocol shared by devices
+ */
 object DeviceProtocol:
   trait Message
   trait DeviceMessage extends Message

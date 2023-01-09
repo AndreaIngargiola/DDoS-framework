@@ -10,9 +10,9 @@ import it.pps.ddos.utils.DataType
 
 import scala.concurrent.duration._
 
-/*
-* Actor of a basic sensor and timed sensor
-* */
+/**
+ * Actor definition of a sensor
+ */
 object SensorActor:
   def apply[I: DataType, O: DataType](sensor: Sensor[I, O]): SensorActor[I, O] = new SensorActor(sensor)
 
@@ -23,6 +23,12 @@ class SensorActor[I: DataType, O: DataType](val sensor: Sensor[I, O]):
       sensor.update(ctx.self, value)
       Behaviors.same
 
+  /**
+   * The actor timed behavior definition of a sensor
+   *
+   * @param duration the frequency of sensor data collection
+   * @return Behavior[DeviceMessage]
+   */
   def behaviorWithTimer(duration: FiniteDuration): Behavior[DeviceMessage] =
     Behaviors.setup { context =>
       Behaviors.withTimers { timer =>
@@ -33,6 +39,11 @@ class SensorActor[I: DataType, O: DataType](val sensor: Sensor[I, O]):
       }
     }
 
+  /**
+   * The actor behavior definition of a sensor
+   *
+   * @return Behavior[DeviceMessage]
+   */
   def behavior(): Behavior[DeviceMessage] = Behaviors.setup { context =>
     Behaviors.receiveMessagePartial(getBasicSensorBehavior(context)
       .orElse(DeviceBehavior.getBasicBehavior(sensor, context)))
